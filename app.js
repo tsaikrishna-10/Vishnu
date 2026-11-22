@@ -25,7 +25,6 @@ provider.setCustomParameters({ prompt: "select_account" });
 
 const $ = (selector) => document.querySelector(selector);
 const image = (path, size = "w500") => path ? `https://image.tmdb.org/t/p/${size}${path}` : "";
-let tmdbCredential = localStorage.getItem("vishnu_tmdb") || "";
 let saved = [];
 try { saved = JSON.parse(localStorage.getItem("vishnu_list") || "[]"); } catch { saved = []; }
 let heroItem = null;
@@ -64,7 +63,6 @@ function showPage(id) {
   });
   window.scrollTo(0, 0);
   if (id === "mylist") renderList();
-  if (id === "settings" && $("#tmdb-key")) $("#tmdb-key").value = tmdbCredential;
   if (pageConfig[id] && pages[id] === 1 && !$(pageConfig[id].target)?.children.length) loadPage(id, false);
 }
 window.showPage = showPage;
@@ -75,16 +73,14 @@ document.addEventListener("click", event => {
 }, true);
 
 async function tmdb(path) {
-  if (!tmdbCredential) throw new Error("Add your TMDB API key or Read Access Token in Settings.");
-  const headers = { accept: "application/json" };
-  let url = "https://api.themoviedb.org/3" + path;
-  if (tmdbCredential.startsWith("eyJ")) headers.Authorization = "Bearer " + tmdbCredential;
-  else url += (url.includes("?") ? "&" : "?") + "api_key=" + encodeURIComponent(tmdbCredential);
-  const response = await fetch(url, { headers });
+  // All devices use the same Vercel server-side proxy; no client-side TMDB key is needed.
+  const response = await fetch("/api/tmdb?path=" + encodeURIComponent(path), {
+    headers: { accept: "application/json" }
+  });
   if (!response.ok) {
     let detail = "";
-    try { detail = (await response.json()).status_message || ""; } catch {}
-    throw new Error(`TMDB error ${response.status}. ${detail || "Check the key/token and try again."}`);
+    try { detail = (await response.json()).error || ""; } catch {}
+    throw new Error(detail || `TMDB request failed (${response.status}).`);
   }
   return response.json();
 }
@@ -140,7 +136,6 @@ function setHero(item) {
 }
 
 async function loadHome() {
-  if (!tmdbCredential) return;
   try {
     const requests = [
       tmdb("/trending/all/week?language=en-US"),
@@ -170,7 +165,6 @@ async function loadHome() {
 async function loadPage(id, append = true) {
   const config = pageConfig[id];
   if (!config) return;
-  if (!tmdbCredential) { toast("Connect TMDB in Settings first."); return; }
   if (pageLocks.has(id)) return;
   pageLocks.add(id);
   const page = append ? pages[id] + 1 : 1;
@@ -297,10 +291,7 @@ onAuthStateChanged(auth, async user => {
 });
 
 function saveKey() {
-  tmdbCredential = $("#tmdb-key")?.value.trim() || "";
-  if (!tmdbCredential) { toast("Paste a TMDB API key or Read Access Token."); return; }
-  localStorage.setItem("vishnu_tmdb", tmdbCredential);
-  toast("TMDB credential saved.");
+  toast("TMDB is configured centrally. No key is needed on this device.");
   loadHome();
 }
 window.saveKey = saveKey;
@@ -356,9 +347,8 @@ $("#hero-list")?.addEventListener("click", () => heroItem ? saveTitle(heroItem) 
 document.querySelector(".mark")?.addEventListener("click", () => showPage("home"));
 window.addEventListener("scroll", () => $("#navbar")?.classList.toggle("scrolled", window.scrollY > 24), { passive: true });
 
-if ($("#tmdb-key")) $("#tmdb-key").value = tmdbCredential;
 renderList();
-if (tmdbCredential) loadHome();
+loadHome();
 
 
 // VISHNU Settings Stage 2 — device-local preferences.

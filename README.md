@@ -5,27 +5,26 @@ Premium, mobile-first cinema discovery and playback companion.
 ## Features
 - Dark, understated premium interface with warm gold accents
 - TMDB-powered trending, movie, TV and multi-search catalogue
-- Local watchlist
+- Server-side TMDB proxy so users do not enter or expose API credentials
+- Local watchlist and Google sign-in / Firestore sync
 - Title detail pages
 - Direct playback for compatible media URLs supplied by the user
-- Open-source download handoff for authorized sources
 - Responsive mobile navigation
 
-## Run locally
-Open `index.html` in a browser or serve this directory with any static web server.
+## Configure TMDB on Vercel (required)
+1. In TMDB, create an API credential and copy the **API Read Access Token** (the long Bearer token).
+2. Open the VISHNU project in Vercel → **Settings → Environment Variables**.
+3. Add `TMDB_API_READ_ACCESS_TOKEN` and paste the token as its value. Enable it for Production (and Preview if you use preview deployments).
+4. Save, then go to **Deployments** and redeploy the latest deployment so the function receives the variable.
+5. Open the deployed VISHNU site. The catalogue should load on every device without asking visitors for a TMDB key.
 
-## Connect TMDB
-1. Create a TMDB account and obtain an API Read Access Token.
-2. Open VISHNU → Settings.
-3. Paste the token and select **Save & connect**.
+You may alternatively set `TMDB_API_KEY` to the TMDB v3 API key instead of the Read Access Token. Do not put either credential in `app.js`, `index.html`, or browser localStorage.
 
-The token is stored in localStorage on that browser. For a public production deployment, use a server-side proxy or serverless function to protect API credentials rather than exposing a private key in client code.
+## Local development
+The frontend expects the `/api/tmdb` Vercel serverless function. Use the Vercel CLI (`vercel dev`) to run the project locally; opening `index.html` directly will not provide the proxy.
 
 ## Deploy
-Import this repository into Vercel as a static site. No build command is required; the output directory is the repository root.
+Import this repository into Vercel. The `api/tmdb.js` serverless function is deployed automatically. No build command is required; the output directory is the repository root.
 
 ## Playback and downloads
-VISHNU does not bundle unauthorized streaming scrapers or content. Playback accepts direct media URLs from sources the user owns or is authorized to access. Browser playback depends on codec, CORS and server support. Download behavior depends on the source's permissions, headers and browser restrictions; this is not a universal downloader.
-
-## Current scope
-This is the first working UI foundation. Authentication, cross-device sync, a robust background download manager, and a protected API proxy require backend configuration and are not yet implemented.
+VISHNU does not bundle unauthorized streaming scrapers or content. Playback accepts direct media URLs from sources the user owns or is authorized to access. Browser playback depends on codec, CORS and server support. Download behavior depends on the source's permissions, headers and browser restrictions.
