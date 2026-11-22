@@ -204,6 +204,10 @@ async function detail(id, type = "movie") {
         <span>${(item.release_date || item.first_air_date || "").slice(0,4)}</span></div></div></div>
       </div><p class="muted" style="margin-bottom:18px">${overview}</p>
       <div class="actions" style="margin-bottom:18px"><button class="btn gold" id="save-title">+ My List</button><button class="btn" id="detail-back">← Back</button></div>
+      <div class="panel"><h3>Download with Flud</h3><p class="muted">Paste a magnet link for content you own or are authorised to download. Flud must be installed on your Android device.</p>
+      <label class="field">Magnet link<input id="flud-magnet" type="text" inputmode="url" placeholder="magnet:?xt=urn:btih:…"></label>
+      <div class="actions"><button class="btn gold" id="open-flud">↓ Open in Flud</button></div>
+      <p class="muted" style="margin-top:10px;font-size:12px">VISHNU does not provide torrent files or search for copyrighted copies. The magnet link is supplied by you.</p></div>
       <div class="panel"><h3>Play from your source</h3><p class="muted">Use a direct media URL you own or are authorised to access.</p>
       <label class="field">Media URL<input id="media-url" type="url" placeholder="https://…"></label>
       <div class="actions"><button class="btn gold" id="play">▶ Play</button><button class="btn" id="download">Open download</button></div>
@@ -212,6 +216,16 @@ async function detail(id, type = "movie") {
     $("#detail-back").onclick = () => showPage("home");
     $("#play").onclick = () => playUrl($("#media-url").value);
     $("#download").onclick = () => downloadUrl($("#media-url").value);
+    $("#open-flud").onclick = () => {
+      const value = $("#flud-magnet")?.value.trim();
+      if (!value || !/^magnet:\?xt=urn:btih:[a-z0-9]{32,40}/i.test(value)) {
+        toast("Paste a valid BitTorrent magnet link first.");
+        return;
+      }
+      // Android will offer Flud (if installed and registered for magnet links).
+      // Other devices may show an app chooser or report that no handler exists.
+      window.location.href = value;
+    };
   } catch (error) { toast(error.message); }
 }
 
