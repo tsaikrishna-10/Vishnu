@@ -30,6 +30,7 @@ let saved = [];
 try { saved = JSON.parse(localStorage.getItem("vishnu_list") || "[]"); } catch { saved = []; }
 let heroItem = null;
 const pages = { movies: 1, kdramas: 1, anime: 1, shows: 1 };
+const pageLocks = new Set();
 const pageConfig = {
   movies: { endpoint: "/movie/popular", target: "#movie-grid", type: "movie" },
   kdramas: { endpoint: "/discover/tv?with_original_language=ko&sort_by=popularity.desc", target: "#kdrama-grid", type: "tv" },
@@ -61,7 +62,7 @@ function showPage(id) {
     if (active) button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
   });
-  window.scrollTo({ top: 0, behavior: "instant" });
+  window.scrollTo(0, 0);
   if (id === "mylist") renderList();
   if (id === "settings" && $("#tmdb-key")) $("#tmdb-key").value = tmdbCredential;
   if (pageConfig[id] && pages[id] === 1 && !$(pageConfig[id].target)?.children.length) loadPage(id, false);
@@ -145,11 +146,12 @@ async function loadHome() {
       tmdb("/trending/all/week?language=en-US"),
       tmdb("/movie/popular?language=en-US&page=1"),
       tmdb("/movie/top_rated?language=en-US&page=1"),
-      tmdb("/discover/movie?with_origin_country=IN&sort_by=popularity.desc&page=1"),
+      tmdb("/discover/movie?with_original_language=te|hi&sort_by=popularity.desc&page=1"),
       tmdb("/discover/tv?with_original_language=ko&sort_by=popularity.desc&page=1"),
-      tmdb("/discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&page=1")
+      tmdb("/discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&page=1"),
+      tmdb("/tv/popular?language=en-US&page=1")
     ];
-    const [trending, popular, topRated, indian, kdramas, anime] = await Promise.all(requests);
+    const [trending, popular, topRated, indian, kdramas, anime, shows] = await Promise.all(requests);
     const featured = trending.results?.find(x => x.backdrop_path) || trending.results?.[0];
     setHero(featured);
     renderCards(trending.results, "#trending");
@@ -161,12 +163,16 @@ async function loadHome() {
     renderCards(popular.results, "#movie-grid", "movie");
     renderCards(kdramas.results, "#kdrama-grid", "tv");
     renderCards(anime.results, "#anime-grid", "tv");
+    renderCards(shows.results, "#show-grid", "tv");
   } catch (error) { console.error("VISHNU catalogue:", error); toast(error.message); }
 }
 
 async function loadPage(id, append = true) {
   const config = pageConfig[id];
-  if (!config || !tmdbCredential) { if (!tmdbCredential) toast("Connect TMDB in Settings first."); return; }
+  if (!config) return;
+  if (!tmdbCredential) { toast("Connect TMDB in Settings first."); return; }
+  if (pageLocks.has(id)) return;
+  pageLocks.add(id);
   const page = append ? pages[id] + 1 : 1;
   try {
     const data = await tmdb(config.endpoint + (config.endpoint.includes("?") ? "&" : "?") + `language=en-US&page=${page}`);
@@ -176,7 +182,12 @@ async function loadPage(id, append = true) {
       renderCards(data.results, target, config.type);
     }
     pages[id] = page;
-  } catch (error) { toast(error.message); }
+  } catch (error) {
+    console.error("VISHNU page load:", id, error);
+    toast(error.message);
+  } finally {
+    pageLocks.delete(id);
+  }
 }
 window.loadMore = id => loadPage(id, true);
 
@@ -190,7 +201,9 @@ async function detail(id, type = "movie") {
     const poster = item.poster_path ? `<img src="${image(item.poster_path)}" alt="">` : "<div></div>";
     const title = escapeHtml(item.title || item.name || "Untitled");
     const overview = escapeHtml(item.overview || "No synopsis available.");
-    $("#detail").innerHTML = `
+    const detailView = $("#detail");
+    if (!detailView) { toast("Detail view is missing from index.html."); return; }
+    detailView.innerHTML = `
       <div class="detail-hero" style="background-image:linear-gradient(180deg,rgba(5,8,6,.25),rgba(5,8,6,.82) 65%,var(--bg)),url('${bg}')">
         <div class="detail-grid">${poster}<div><div class="eyebrow">${kind === "tv" ? "TV SERIES" : "FEATURED FILM"}</div>
         <h1>${title}</h1><div class="hero-meta"><span class="rate">★ ${Number(item.vote_average || 0).toFixed(1)}</span>
@@ -304,6 +317,7 @@ function downloadUrl(value) {
 
 $("#open-search")?.addEventListener("click", () => {
   $("#search-overlay")?.classList.add("open");
+  if ($("#search-results")) $("#search-results").innerHTML = '<div class="empty">Type a title and press Enter to search TMDB.</div>';
   setTimeout(() => $("#search")?.focus(), 40);
 });
 $("#close-search")?.addEventListener("click", () => $("#search-overlay")?.classList.remove("open"));
