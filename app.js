@@ -135,6 +135,47 @@ function setHero(item) {
   if ($("#hero-desc")) $("#hero-desc").textContent = item.overview || "";
 }
 
+
+function renderTop10AndPosterFeed(items) {
+  const top = $("#top10Scroll");
+  const feed = $("#posterFeedGrid");
+  const count = $("#posterFeedCount");
+  if (!top || !feed) return;
+  const list = (items || []).filter(item => item && item.poster_path).slice(0, 10);
+  if (!list.length) {
+    top.innerHTML = '<div class="empty">No trending posters available right now.</div>';
+    feed.innerHTML = '<div class="empty">No posters available right now.</div>';
+    if (count) count.textContent = "0 Titles";
+    return;
+  }
+  const titleOf = item => item.title || item.name || "Untitled";
+  const kindOf = item => item.media_type === "tv" ? "TV" : "MOVIE";
+  top.innerHTML = list.map((item, index) => {
+    const title = escapeHtml(titleOf(item));
+    const rank = index + 1;
+    const rankStyle = rank === 1 ? "rank-1" : rank === 2 ? "rank-2" : rank === 3 ? "rank-3" : "rank-default";
+    return `<div class="top10-item ${rank === 10 ? "rank-ten" : ""}" data-id="${item.id}" data-type="${item.media_type || "movie"}">
+      <span class="top10-rank ${rankStyle}">${rank}</span>
+      <div class="top10-card"><span class="top10-kind">${kindOf(item)}</span>
+      <img src="${image(item.poster_path)}" alt="${title}" loading="lazy">
+      <div class="top10-poster-footer"><div class="top10-poster-title">${title}</div></div></div></div>`;
+  }).join("");
+  feed.innerHTML = list.map((item, index) => {
+    const title = escapeHtml(titleOf(item));
+    const year = (item.release_date || item.first_air_date || "").slice(0, 4);
+    return `<article class="feed-poster-card" data-id="${item.id}" data-type="${item.media_type || "movie"}">
+      <div class="feed-poster-media"><img src="${image(item.poster_path)}" alt="${title}" loading="lazy">
+      <span class="feed-rating-pill">★ ${Number(item.vote_average || 0).toFixed(1)}</span>
+      <span class="feed-quality-pill">${kindOf(item)}</span></div>
+      <div class="feed-poster-body"><div class="feed-poster-name">${title}</div>
+      <div class="feed-poster-meta"><span>${year}</span><span>#${index + 1}</span></div></div></article>`;
+  }).join("");
+  if (count) count.textContent = `${list.length} Titles`;
+  [top, feed].forEach(container => container.querySelectorAll("[data-id]").forEach(card => {
+    card.addEventListener("click", () => detail(card.dataset.id, card.dataset.type));
+  }));
+}
+
 async function loadHome() {
   try {
     const requests = [
@@ -149,6 +190,7 @@ async function loadHome() {
     const [trending, popular, topRated, indian, kdramas, anime, shows] = await Promise.all(requests);
     const featured = trending.results?.find(x => x.backdrop_path) || trending.results?.[0];
     setHero(featured);
+    renderTop10AndPosterFeed(trending.results);
     renderCards(trending.results, "#trending");
     renderCards(popular.results, "#popular", "movie");
     renderCards(topRated.results, "#toprated", "movie");
