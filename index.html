@@ -136,7 +136,7 @@ function cards(items,target){
  el.innerHTML=items.map(m=>'<article class="movie" data-id="'+m.id+'" data-type="'+(m.media_type||'movie')+'"><div class="poster">'+(m.poster_path?'<img loading="lazy" src="'+img(m.poster_path)+'" alt="">':'')+'<span class="tag">'+(m.vote_average?m.vote_average.toFixed(1)+' ★':'VISHNU')+'</span></div><h3>'+(m.title||m.name||'Untitled')+'</h3><small>'+((m.release_date||m.first_air_date||'').slice(0,4))+'</small></article>').join('');
  el.querySelectorAll('.movie').forEach(c=>{c.onclick=()=>{$('#search-overlay')?.classList.remove('open');detail(c.dataset.id,c.dataset.type)}});
 }
-async async function load(){
+async function load(){
  if(!key)return;
  try{
   const [t,p,shows,anime]=await Promise.all([
@@ -163,7 +163,7 @@ function setHero(m){
 }
 $('#hero-play').onclick=()=>heroItem?detail(heroItem.id,heroItem.media_type||'movie'):showPage('movies');
 $('#hero-list').onclick=()=>heroItem?saveTitle(heroItem):showPage('mylist');
-async async function detail(id,type){
+async function detail(id,type){
  try{
   const m=await api('/'+(type==='tv'?'tv':'movie')+'/'+id+'?language=en-US&append_to_response=videos,credits');
   current={...m,media_type:type};showPage('detail');
