@@ -54,6 +54,16 @@ main{padding-top:0}.hero{padding-top:105px;min-height:64vh;max-height:660px;alig
 @media(min-width:601px){.bottom{display:none}.search-results{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:600px){.top{height:62px;padding:0 16px}.hero{min-height:58vh;padding:90px 20px 30px}.hero h1{font-size:clamp(38px,10vw,54px)}.hero p{font-size:13px}.chips{padding:9px 17px 4px}.bottom{display:grid;grid-template-columns:repeat(5,1fr)}.search-results{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}}
 
+
+/* TMDB dynamic detail-page layout */
+.detail-hero{margin:-38px calc(-1 * clamp(17px,4vw,58px)) 22px;padding:105px clamp(17px,4vw,58px) 28px;background-size:cover;background-position:center 25%;position:relative;isolation:isolate}
+.detail-hero:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(5,8,6,.2),rgba(5,8,6,.75) 62%,var(--bg))}
+.detail-grid{display:grid;grid-template-columns:150px minmax(0,1fr);gap:22px;align-items:end}
+.detail-grid img{width:100%;border-radius:14px;border:1px solid var(--line);box-shadow:0 16px 36px #0009}
+.detail-grid h1{font:800 clamp(28px,5vw,48px)/1.05 Outfit,system-ui;margin:8px 0}
+#detail>.muted{font-size:14px;line-height:1.7}
+@media(max-width:600px){.detail-hero{margin:-27px -17px 18px;padding:90px 17px 24px}.detail-grid{grid-template-columns:100px minmax(0,1fr);gap:14px}.detail-grid h1{font-size:27px}.detail-grid img{border-radius:11px}}
+
 </style></head>
 <body>
 <header class="top" id="navbar">
@@ -112,14 +122,54 @@ const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 const $=s=>document.querySelector(s), img=(p,size='w500')=>p?'https://image.tmdb.org/t/p/'+size+p:'';
-let key=localStorage.getItem('vishnu_tmdb')||'', catalogue=[], current=null, saved=JSON.parse(localStorage.getItem('vishnu_list')||'[]');
+let key=localStorage.getItem('vishnu_tmdb')||'', catalogue=[], current=null, heroItem=null, saved=JSON.parse(localStorage.getItem('vishnu_list')||'[]');
 function toast(t){let e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2300)}
 function showPage(id){$('#search-overlay')?.classList.remove('open');document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===id));window.scrollTo(0,0);if(id==='mylist')renderList()}
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 async function api(path){if(!key)throw Error('Add your TMDB API key in Settings first.');let r=await fetch('https://api.themoviedb.org/3'+path,{headers:{Authorization:'Bearer '+key,accept:'application/json'}});if(!r.ok)throw Error('TMDB request failed ('+r.status+'). Check your key.');return r.json()}
-function cards(items,target){let el=$(target);if(!items?.length){el.innerHTML='<div class="empty">No titles found.</div>';return}el.innerHTML=items.map(m=>'<article class="movie" data-id="'+m.id+'" data-type="'+(m.media_type||'movie')+'"><div class="poster">'+(m.poster_path?'<img loading="lazy" src="'+img(m.poster_path)+'" alt="">':'')+'<span class="tag">'+(m.vote_average?m.vote_average.toFixed(1)+' ★':'VISHNU PICK')+'</span></div><h3>'+(m.title||m.name||'Untitled')+'</h3><small>'+((m.release_date||m.first_air_date||'').slice(0,4))+'</small></article>').join('');el.querySelectorAll('.movie').forEach(c=>c.onclick=()=>detail(c.dataset.id,c.dataset.type))}
-async function load(){if(!key)return;try{let [t,p]=await Promise.all([api('/trending/all/week?language=en-US'),api('/movie/popular?language=en-US&page=1')]);cards(t.results,'#trending');cards(p.results,'#popular');cards(p.results,'#movie-grid');let s=await api('/tv/popular?language=en-US&page=1');cards(s.results.map(x=>({...x,media_type:'tv'})),'#show-grid');catalogue=[...t.results,...p.results,...s.results.map(x=>({...x,media_type:'tv'}))];}catch(e){toast(e.message)}}
-async function detail(id,type){try{let m=await api('/'+(type==='tv'?'tv':'movie')+'/'+id+'?language=en-US&append_to_response=videos,credits');current={...m,media_type:type};showPage('detail');let poster=img(m.poster_path);$('#detail').innerHTML='<div class="detail">'+(poster?'<img src="'+poster+'" alt="">':'')+'<div><div class="eyebrow">'+(type==='tv'?'TV SERIES':'FEATURED FILM')+'</div><h1 style="font:48px Georgia;margin:10px 0">'+(m.title||m.name)+'</h1><p class="muted">'+((m.release_date||m.first_air_date||'').slice(0,4))+' · '+(m.vote_average||'—')+' ★ · '+(m.runtime?m.runtime+' min':(m.number_of_seasons||'')+' seasons')+'</p><p>'+ (m.overview||'No synopsis available.')+'</p><div class="actions"><button class="btn gold" id="save-title">♡ Add to My List</button></div><div class="panel"><h3>Play from your source</h3><p class="muted">Paste a direct media URL you own or are authorized to access.</p><label class="field">Media URL<input id="media-url" type="url" placeholder="https://…"></label><button class="btn gold" id="play">Play</button><button class="btn" id="download">Open download</button><video id="player" controls playsinline style="display:none;width:100%;margin-top:15px;background:#000"></video></div></div></div>';$('#save-title').onclick=()=>saveTitle(current);$('#play').onclick=()=>playUrl($('#media-url').value);$('#download').onclick=()=>downloadUrl($('#media-url').value)}catch(e){toast(e.message)}}
+function cards(items,target){
+ let el=$(target);if(!el)return;
+ if(!items?.length){el.innerHTML='<div class="empty">No titles found.</div>';return}
+ el.innerHTML=items.map(m=>'<article class="movie" data-id="'+m.id+'" data-type="'+(m.media_type||'movie')+'"><div class="poster">'+(m.poster_path?'<img loading="lazy" src="'+img(m.poster_path)+'" alt="">':'')+'<span class="tag">'+(m.vote_average?m.vote_average.toFixed(1)+' ★':'VISHNU')+'</span></div><h3>'+(m.title||m.name||'Untitled')+'</h3><small>'+((m.release_date||m.first_air_date||'').slice(0,4))+'</small></article>').join('');
+ el.querySelectorAll('.movie').forEach(c=>{c.onclick=()=>{$('#search-overlay')?.classList.remove('open');detail(c.dataset.id,c.dataset.type)}});
+}
+async async function load(){
+ if(!key)return;
+ try{
+  const [t,p,shows,anime]=await Promise.all([
+   api('/trending/all/week?language=en-US'),
+   api('/movie/popular?language=en-US&page=1'),
+   api('/tv/popular?language=en-US&page=1'),
+   api('/discover/tv?with_genres=16&language=en-US&page=1')
+  ]);
+  setHero(t.results.find(x=>x.backdrop_path)||t.results[0]);
+  cards(t.results,'#trending');cards(p.results,'#popular');cards(p.results,'#movie-grid');
+  cards(shows.results.map(x=>({...x,media_type:'tv'})),'#show-grid');
+  cards(anime.results.map(x=>({...x,media_type:'tv'})),'#anime-grid');
+  catalogue=[...t.results,...p.results,...shows.results.map(x=>({...x,media_type:'tv'}))];
+ }catch(e){toast(e.message)}
+}
+function setHero(m){
+ if(!m)return;heroItem=m;
+ const backdrop=m.backdrop_path?img(m.backdrop_path,'original'):img(m.poster_path,'original');
+ if(backdrop)$('#hero-banner').style.backgroundImage="radial-gradient(circle at 80% 18%,rgba(16,185,129,.22),transparent 48%),linear-gradient(180deg,rgba(5,8,6,.18),rgba(5,8,6,.58) 58%,var(--bg)),url('"+backdrop+"')";
+ $('#hero-eyebrow').textContent='● #1 TRENDING ON VISHNU';
+ $('#hero-title').textContent=m.title||m.name||'Featured';
+ $('#hero-meta').innerHTML='<span class="rate">★ '+(m.vote_average||8).toFixed(1)+'</span><span>'+((m.release_date||m.first_air_date||'').slice(0,4))+'</span><span class="badge-4k">4K HDR</span>';
+ $('#hero-desc').textContent=m.overview||'';
+}
+$('#hero-play').onclick=()=>heroItem?detail(heroItem.id,heroItem.media_type||'movie'):showPage('movies');
+$('#hero-list').onclick=()=>heroItem?saveTitle(heroItem):showPage('mylist');
+async async function detail(id,type){
+ try{
+  const m=await api('/'+(type==='tv'?'tv':'movie')+'/'+id+'?language=en-US&append_to_response=videos,credits');
+  current={...m,media_type:type};showPage('detail');
+  const bg=m.backdrop_path?img(m.backdrop_path,'original'):img(m.poster_path,'original');
+  $('#detail').innerHTML='<div class="detail-hero" style="background-image:linear-gradient(180deg,rgba(5,8,6,.28),rgba(5,8,6,.82) 65%,var(--bg)),url(\''+bg+'\')"><div class="detail-grid">'+(m.poster_path?'<img src="'+img(m.poster_path)+'" alt="">':'<div></div>')+'<div><div class="eyebrow">'+(type==='tv'?'TV SERIES':'FEATURED FILM')+'</div><h1>'+(m.title||m.name)+'</h1><div class="hero-meta"><span class="rate">★ '+(m.vote_average||0).toFixed(1)+'</span><span>'+((m.release_date||m.first_air_date||'').slice(0,4))+'</span><span>'+(m.runtime?m.runtime+' min':(m.number_of_seasons||'')+' seasons')+'</span></div></div></div></div><p class="muted" style="margin-bottom:18px">'+(m.overview||'No synopsis available.')+'</p><div class="actions" style="margin-bottom:18px"><button class="btn gold" id="save-title">+ Add to My List</button><button class="btn" id="detail-back">← Back</button></div><div class="panel"><h3>Play from your source</h3><p class="muted">Paste a direct media URL you own or are authorized to access.</p><label class="field">Media URL<input id="media-url" type="url" placeholder="https://…"></label><div class="actions"><button class="btn gold" id="play">▶ Play</button><button class="btn" id="download">Open download</button></div><video id="player" controls playsinline style="display:none;width:100%;margin-top:16px;border-radius:12px;background:#000"></video></div>';
+  $('#save-title').onclick=()=>saveTitle(current);$('#detail-back').onclick=()=>showPage('home');
+  $('#play').onclick=()=>playUrl($('#media-url').value);$('#download').onclick=()=>downloadUrl($('#media-url').value);
+ }catch(e){toast(e.message)}
+}
 async function saveTitle(m){
  const item={id:m.id,title:m.title||m.name,poster_path:m.poster_path,media_type:m.media_type||'movie'};
  const k=item.media_type+'_'+item.id;
@@ -153,14 +203,13 @@ function downloadUrl(url){try{let u=new URL(url);if(!['http:','https:'].includes
 $('#search').addEventListener('keydown',async e=>{if(e.key==='Enter'){if(!key){showPage('settings');toast('Connect TMDB first');return}try{let d=await api('/search/multi?query='+encodeURIComponent(e.target.value)+'&include_adult=false&language=en-US&page=1');cards(d.results.filter(x=>x.media_type!=='person'),'#search-results');$('#search-overlay').classList.add('open')}catch(err){toast(err.message)}}});
 $('#tmdb-key').value=key;if(key)load();
 
-/* UI wiring for the integrated glass layout */
-const searchOverlay=$('#search-overlay');
-$('#open-search')?.addEventListener('click',()=>{searchOverlay.classList.add('open');setTimeout(()=>$('#search').focus(),40)});
-$('#close-search')?.addEventListener('click',()=>searchOverlay.classList.remove('open'));
-searchOverlay?.addEventListener('click',e=>{if(e.target===searchOverlay)searchOverlay.classList.remove('open')});
+
+/* Hero, search overlay and mobile navigation wiring */
+$('#open-search')?.addEventListener('click',()=>{const o=$('#search-overlay');o.classList.add('open');setTimeout(()=>$('#search').focus(),40)});
+$('#close-search')?.addEventListener('click',()=>$('#search-overlay').classList.remove('open'));
+$('#search-overlay')?.addEventListener('click',e=>{if(e.target.id==='search-overlay')e.currentTarget.classList.remove('open')});
 document.querySelectorAll('.chips [data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 document.querySelector('.mark')?.addEventListener('click',()=>showPage('home'));
 window.addEventListener('scroll',()=>$('#navbar')?.classList.toggle('scrolled',window.scrollY>24),{passive:true});
-$('#hero-play')?.addEventListener('click',()=>detail(693134,'movie'));
-$('#hero-list')?.addEventListener('click',async()=>{try{const m=await api('/movie/693134?language=en-US');await saveTitle({...m,media_type:'movie'});}catch(e){toast(e.message)}});
+
 </script></body></html>
