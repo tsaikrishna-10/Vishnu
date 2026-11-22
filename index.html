@@ -15,10 +15,26 @@
 <div id="anime" class="page subpage"><div class="section-head"><h2>Anime</h2><span>Animation & anime</span></div><div id="anime-grid" class="grid"></div></div>
 <div id="mylist" class="page subpage"><div class="section-head"><h2>My List</h2><span>Saved to this device</span></div><div id="list-grid" class="grid"></div></div>
 <div id="downloads" class="page subpage"><div class="section-head"><h2>Downloads</h2><span>Offline library</span></div><div class="panel"><p class="muted">Downloads you start from a supported source will be managed by your browser or device. Only download content you have permission to save.</p><p id="download-note">No downloads recorded in this browser yet.</p></div></div>
-<div id="settings" class="page subpage"><h2>Settings</h2><div class="panel"><h3>Movie catalogue</h3><p class="muted">Connect your TMDB API key to load posters, descriptions, trending titles and search results. The key stays in this browser.</p><label class="field">TMDB API key<input id="tmdb-key" type="password" placeholder="Paste your TMDB API key"></label><button class="btn gold" onclick="saveKey()">Save & connect</button></div><div class="panel"><h3>Playback & sources</h3><p class="muted">VISHNU supports playback through sources you own or are authorized to access. Add a direct media URL on a title's detail screen when available. No third-party scraping or unauthorized streams are bundled.</p><label class="field">Default playback quality<select id="quality"><option>Auto</option><option>1080p</option><option>720p</option><option>480p</option></select></label></div><div class="panel"><h3>About VISHNU</h3><p class="muted">A premium cinema companion. Your watchlist is stored locally on this device.</p></div></div>
+<div id="settings" class="page subpage"><h2>Settings</h2><div class="panel"><h3>VISHNU Account</h3><p id="auth-status" class="muted">Not signed in. Sign in to sync your watchlist across devices.</p><button class="btn gold" id="google-login">Continue with Google</button><button class="btn" id="google-logout" style="display:none">Sign out</button></div><div class="panel"><h3>Movie catalogue</h3><p class="muted">Connect your TMDB API key to load posters, descriptions, trending titles and search results. The key stays in this browser.</p><label class="field">TMDB API key<input id="tmdb-key" type="password" placeholder="Paste your TMDB API key"></label><button class="btn gold" onclick="saveKey()">Save & connect</button></div><div class="panel"><h3>Playback & sources</h3><p class="muted">VISHNU supports playback through sources you own or are authorized to access. Add a direct media URL on a title's detail screen when available. No third-party scraping or unauthorized streams are bundled.</p><label class="field">Default playback quality<select id="quality"><option>Auto</option><option>1080p</option><option>720p</option><option>480p</option></select></label></div><div class="panel"><h3>About VISHNU</h3><p class="muted">A premium cinema companion. Your watchlist is stored locally on this device.</p></div></div>
 <div id="detail" class="page subpage"></div>
 </main><nav class="bottom"><button class="active" data-page="home">⌂<span>Home</span></button><button data-page="movies">▣<span>Movies</span></button><button data-page="mylist">♡<span>My List</span></button><button data-page="downloads">↓<span>Downloads</span></button><button data-page="settings">⚙<span>Settings</span></button></nav><footer class="footer">VISHNU · Cinema, reimagined. <span style="float:right">Made for the love of stories.</span></footer><div class="toast" id="toast"></div>
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyCjI14eA4XYINwDGFRi0Mo7PnN52q7QoH0",
+  authDomain: "vishnu-b6fa9.firebaseapp.com",
+  projectId: "vishnu-b6fa9",
+  storageBucket: "vishnu-b6fa9.firebasestorage.app",
+  messagingSenderId: "582519068175",
+  appId: "1:582519068175:web:18ceeb3eeb0bc8ec27f57a",
+  measurementId: "G-8MZ442LLS2"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const googleProvider = new GoogleAuthProvider();
 const $=s=>document.querySelector(s), img=(p,size='w500')=>p?'https://image.tmdb.org/t/p/'+size+p:'';
 let key=localStorage.getItem('vishnu_tmdb')||'', catalogue=[], current=null, saved=JSON.parse(localStorage.getItem('vishnu_list')||'[]');
 function toast(t){let e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2300)}
@@ -28,8 +44,34 @@ async function api(path){if(!key)throw Error('Add your TMDB API key in Settings 
 function cards(items,target){let el=$(target);if(!items?.length){el.innerHTML='<div class="empty">No titles found.</div>';return}el.innerHTML=items.map(m=>'<article class="movie" data-id="'+m.id+'" data-type="'+(m.media_type||'movie')+'"><div class="poster">'+(m.poster_path?'<img loading="lazy" src="'+img(m.poster_path)+'" alt="">':'')+'<span class="tag">'+(m.vote_average?m.vote_average.toFixed(1)+' ★':'VISHNU PICK')+'</span></div><h3>'+(m.title||m.name||'Untitled')+'</h3><small>'+((m.release_date||m.first_air_date||'').slice(0,4))+'</small></article>').join('');el.querySelectorAll('.movie').forEach(c=>c.onclick=()=>detail(c.dataset.id,c.dataset.type))}
 async function load(){if(!key)return;try{let [t,p]=await Promise.all([api('/trending/all/week?language=en-US'),api('/movie/popular?language=en-US&page=1')]);cards(t.results,'#trending');cards(p.results,'#popular');cards(p.results,'#movie-grid');let s=await api('/tv/popular?language=en-US&page=1');cards(s.results.map(x=>({...x,media_type:'tv'})),'#show-grid');catalogue=[...t.results,...p.results,...s.results.map(x=>({...x,media_type:'tv'}))];}catch(e){toast(e.message)}}
 async function detail(id,type){try{let m=await api('/'+(type==='tv'?'tv':'movie')+'/'+id+'?language=en-US&append_to_response=videos,credits');current={...m,media_type:type};showPage('detail');let poster=img(m.poster_path);$('#detail').innerHTML='<div class="detail">'+(poster?'<img src="'+poster+'" alt="">':'')+'<div><div class="eyebrow">'+(type==='tv'?'TV SERIES':'FEATURED FILM')+'</div><h1 style="font:48px Georgia;margin:10px 0">'+(m.title||m.name)+'</h1><p class="muted">'+((m.release_date||m.first_air_date||'').slice(0,4))+' · '+(m.vote_average||'—')+' ★ · '+(m.runtime?m.runtime+' min':(m.number_of_seasons||'')+' seasons')+'</p><p>'+ (m.overview||'No synopsis available.')+'</p><div class="actions"><button class="btn gold" id="save-title">♡ Add to My List</button></div><div class="panel"><h3>Play from your source</h3><p class="muted">Paste a direct media URL you own or are authorized to access.</p><label class="field">Media URL<input id="media-url" type="url" placeholder="https://…"></label><button class="btn gold" id="play">Play</button><button class="btn" id="download">Open download</button><video id="player" controls playsinline style="display:none;width:100%;margin-top:15px;background:#000"></video></div></div></div>';$('#save-title').onclick=()=>saveTitle(current);$('#play').onclick=()=>playUrl($('#media-url').value);$('#download').onclick=()=>downloadUrl($('#media-url').value)}catch(e){toast(e.message)}}
-function saveTitle(m){if(!saved.some(x=>x.id===m.id)){saved.push({id:m.id,title:m.title||m.name,poster_path:m.poster_path,media_type:m.media_type});localStorage.setItem('vishnu_list',JSON.stringify(saved))}toast('Added to My List')}
+async function saveTitle(m){
+ const item={id:m.id,title:m.title||m.name,poster_path:m.poster_path,media_type:m.media_type||'movie'};
+ const k=item.media_type+'_'+item.id;
+ if(!saved.some(x=>x.id===item.id&&x.media_type===item.media_type)) saved.push(item);
+ localStorage.setItem('vishnu_list',JSON.stringify(saved));
+ if(auth.currentUser){try{await setDoc(doc(db,'users',auth.currentUser.uid,'watchlist',k),item);toast('Saved to your cloud watchlist')}catch(e){toast('Saved on this device; cloud sync failed')}}
+ else toast('Added to My List');
+}
 function renderList(){cards(saved,'#list-grid')}
+function updateAccountUI(user){
+ const status=$('#auth-status'), login=$('#google-login'), logout=$('#google-logout');
+ if(!status||!login||!logout)return;
+ if(user){status.textContent='Signed in as '+(user.displayName||user.email)+' · Cloud sync enabled';login.style.display='none';logout.style.display='inline-block'}
+ else{status.textContent='Not signed in. Sign in to sync your watchlist across devices.';login.style.display='inline-block';logout.style.display='none'}
+}
+async function loadCloudWatchlist(user){
+ const snap=await getDocs(collection(db,'users',user.uid,'watchlist'));
+ const cloud=snap.docs.map(d=>d.data());
+ if(cloud.length){saved=cloud;localStorage.setItem('vishnu_list',JSON.stringify(saved));renderList()}
+ else if(saved.length){
+   for(const item of saved){const k=(item.media_type||'movie')+'_'+item.id;await setDoc(doc(db,'users',user.uid,'watchlist',k),item)}
+ }
+}
+$('#google-login').addEventListener('click',async()=>{try{await signInWithRedirect(auth,googleProvider)}catch(e){toast('Google sign-in error: '+e.message)}});
+$('#google-logout').addEventListener('click',async()=>{try{await signOut(auth);toast('Signed out')}catch(e){toast(e.message)}});
+getRedirectResult(auth).catch(e=>toast('Google sign-in error: '+e.message));
+onAuthStateChanged(auth,async user=>{updateAccountUI(user);if(user){try{await loadCloudWatchlist(user)}catch(e){toast('Cloud sync unavailable. Check Firestore rules.')}}});
+window.showPage=showPage; window.saveKey=saveKey;
 function saveKey(){key=$('#tmdb-key').value.trim();localStorage.setItem('vishnu_tmdb',key);toast('TMDB key saved');load()}
 function playUrl(url){try{let u=new URL(url);if(!['http:','https:'].includes(u.protocol))throw 0;let v=$('#player');v.src=u.href;v.style.display='block';v.play().catch(()=>toast('Playback may not be supported for this format.'))}catch(e){toast('Enter a valid direct media URL.')}}
 function downloadUrl(url){try{let u=new URL(url);if(!['http:','https:'].includes(u.protocol))throw 0;let a=document.createElement('a');a.href=u.href;a.target='_blank';a.rel='noopener';a.click();toast('Opened source. Download availability depends on the source.')}catch(e){toast('Enter a valid direct media URL.')}}
