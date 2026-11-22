@@ -246,6 +246,20 @@ async function detail(id, type = "movie") {
         <span>${(item.release_date || item.first_air_date || "").slice(0,4)}</span></div></div></div>
       </div><p class="muted" style="margin-bottom:18px">${overview}</p>
       <div class="actions" style="margin-bottom:18px"><button class="btn gold" id="save-title">+ My List</button><button class="btn" id="detail-back">← Back</button></div>
+      <div class="panel" id="external-player-panel">
+        <h3>Watch on VISHNU</h3>
+        <p class="muted">Choose an external player. Playback availability, quality and language options are provided by the selected service.</p>
+        ${kind === "tv" ? `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px"><label class="field">Season<input id="player-season" type="number" min="1" value="1"></label><label class="field">Episode<input id="player-episode" type="number" min="1" value="1"></label></div>` : ""}
+        <div class="actions">
+          <button class="btn gold" id="player-mapple" type="button">Mapple Player</button>
+          <button class="btn" id="player-vidora" type="button">Vidora Player</button>
+        </div>
+        <div id="external-player-status" class="muted" style="margin-top:10px">Select a player to load playback.</div>
+        <div style="position:relative;width:100%;aspect-ratio:16/9;margin-top:14px;background:#000;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+          <iframe id="external-player-frame" title="VISHNU external video player" src="about:blank" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+        <p class="muted" style="margin-top:10px;font-size:11px">External player services are not operated by VISHNU. Use content you are authorised to access. Watch Party is not enabled.</p>
+      </div>
       <div class="panel"><h3>Download with Flud</h3><p class="muted">Paste a magnet link for content you own or are authorised to download. Flud must be installed on your Android device.</p>
       <label class="field">Magnet link<input id="flud-magnet" type="text" inputmode="url" placeholder="magnet:?xt=urn:btih:…"></label>
       <div class="actions"><button class="btn gold" id="open-flud">↓ Open in Flud</button></div>
@@ -256,6 +270,35 @@ async function detail(id, type = "movie") {
       <video id="player" controls playsinline style="display:none;width:100%;margin-top:16px;border-radius:12px;background:#000"></video></div>`;
     $("#save-title").onclick = () => saveTitle(item);
     $("#detail-back").onclick = () => showPage("home");
+    const externalFrame = $("#external-player-frame");
+    const externalStatus = $("#external-player-status");
+    const loadExternalPlayer = provider => {
+      const season = Math.max(1, Number($("#player-season")?.value || 1));
+      const episode = Math.max(1, Number($("#player-episode")?.value || 1));
+      const params = new URLSearchParams({ title: "true", poster: "true" });
+      let src = "";
+      if (provider === "mapple") {
+        params.set("autoPlay", "false");
+        params.set("theme", "8B5CF6");
+        src = kind === "tv"
+          ? `https://mapple.fun/watch/tv/${id}-${season}-${episode}?${params.toString()}`
+          : `https://mapple.fun/watch/movie/${id}?${params.toString()}`;
+      } else {
+        params.set("autoplay", "false");
+        params.set("primaryColor", "8B5CF6");
+        params.set("secondaryColor", "21143A");
+        params.set("iconColor", "FFFFFF");
+        src = kind === "tv"
+          ? `https://vidora.ac/tv/${id}/${season}/${episode}?${params.toString()}`
+          : `https://vidora.ac/movie/${id}?${params.toString()}`;
+      }
+      externalFrame.src = src;
+      externalStatus.textContent = `${provider === "mapple" ? "Mapple" : "Vidora"} player loaded. If playback does not start, try the other player.`;
+      $("#player-mapple")?.classList.toggle("gold", provider === "mapple");
+      $("#player-vidora")?.classList.toggle("gold", provider === "vidora");
+    };
+    $("#player-mapple")?.addEventListener("click", () => loadExternalPlayer("mapple"));
+    $("#player-vidora")?.addEventListener("click", () => loadExternalPlayer("vidora"));
     $("#play").onclick = () => playUrl($("#media-url").value);
     $("#download").onclick = () => downloadUrl($("#media-url").value);
     $("#open-flud").onclick = () => {
@@ -270,6 +313,24 @@ async function detail(id, type = "movie") {
     };
   } catch (error) { toast(error.message); }
 }
+
+window.addEventListener("message", event => {
+  if (!["https://vidora.ac", "https://mapple.fun"].includes(event.origin)) return;
+  const payload = event.data;
+  if (!payload || typeof payload !== "object") return;
+  if (payload.type === "MEDIA_DATA" && payload.data) {
+    try {
+      const current = JSON.parse(localStorage.getItem("vishnu_player_progress") || "{}");
+      const media = payload.data;
+      const key = `${media.mediaType || media.media_type || "movie"}_${media.tmdbId || media.id || "unknown"}`;
+      current[key] = { ...media, provider: event.origin, updatedAt: Date.now() };
+      localStorage.setItem("vishnu_player_progress", JSON.stringify(current));
+    } catch (error) { console.warn("VISHNU player progress could not be saved:", error); }
+  }
+  if (payload.type === "PLAYER_EVENT" && payload.data?.event === "ended") {
+    console.info("VISHNU external playback ended:", payload.data.tmdbId);
+  }
+});
 
 async function saveTitle(item) {
   const entry = { id: item.id, title: item.title || item.name, poster_path: item.poster_path, media_type: item.media_type || "movie" };
