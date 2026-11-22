@@ -131,7 +131,7 @@ function setHero(item) {
   const backdrop = image(item.backdrop_path || item.poster_path, "original");
   const hero = $("#hero-banner");
   if (hero && backdrop) hero.style.backgroundImage =
-    `linear-gradient(180deg,rgba(5,8,6,.15),rgba(5,8,6,.62) 58%,var(--bg)),url("${backdrop}")`;
+    `linear-gradient(180deg,rgba(7,5,12,.15),rgba(7,5,12,.62) 58%,var(--bg)),url("${backdrop}")`;
   if ($("#hero-eyebrow")) $("#hero-eyebrow").textContent = "● TRENDING ON VISHNU";
   if ($("#hero-title")) $("#hero-title").textContent = item.title || item.name || "Featured";
   if ($("#hero-meta")) $("#hero-meta").innerHTML =
@@ -204,7 +204,7 @@ async function detail(id, type = "movie") {
     const detailView = $("#detail");
     if (!detailView) { toast("Detail view is missing from index.html."); return; }
     detailView.innerHTML = `
-      <div class="detail-hero" style="background-image:linear-gradient(180deg,rgba(5,8,6,.25),rgba(5,8,6,.82) 65%,var(--bg)),url('${bg}')">
+      <div class="detail-hero" style="background-image:linear-gradient(180deg,rgba(7,5,12,.25),rgba(7,5,12,.82) 65%,var(--bg)),url('${bg}')">
         <div class="detail-grid">${poster}<div><div class="eyebrow">${kind === "tv" ? "TV SERIES" : "FEATURED FILM"}</div>
         <h1>${title}</h1><div class="hero-meta"><span class="rate">★ ${Number(item.vote_average || 0).toFixed(1)}</span>
         <span>${(item.release_date || item.first_air_date || "").slice(0,4)}</span></div></div></div>
