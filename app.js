@@ -239,7 +239,7 @@ function updateAccount(user) {
   if (!status || !login || !logout) return;
   const displayName = user?.displayName || user?.email?.split("@")[0] || "VISHNU User";
   const email = user?.email || "Sign in to see your account details";
-  const initials = displayName.split(/\\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() || "").join("") || "V";
+  const initials = displayName.split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() || "").join("") || "V";
   if ($("#settings-name")) $("#settings-name").textContent = displayName;
   if ($("#settings-email")) $("#settings-email").textContent = email;
   if ($("#settings-avatar")) $("#settings-avatar").textContent = initials;
