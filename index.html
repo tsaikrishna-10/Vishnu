@@ -94,6 +94,15 @@ body{background-color:var(--bg);background-image:radial-gradient(circle at 80% 5
 .settings-swatch{width:22px;height:22px;border-radius:50%;background:#8b5cf6;box-shadow:0 0 16px rgba(139,92,246,.45)}
 .settings-toggle input{width:19px;height:19px;accent-color:#8b5cf6}
 @media(max-width:600px){.settings-page{padding:84px 16px 28px}.settings-heading h2{font-size:30px}.settings-tabs{gap:4px}.settings-tab{padding:10px 12px;font-size:12px}.settings-user-card,.settings-card{border-radius:17px}}
+/* Stage 2 settings preferences */
+body.compact-ui .movie h3{margin-top:5px;font-size:12px}
+body.compact-ui .section{padding-bottom:12px}
+body.compact-ui .settings-card{padding:11px;margin-bottom:12px;border-radius:14px}
+body.large-text{font-size:106%}
+body.large-text .movie h3{font-size:14px}
+body.large-text .movie small,body.large-text .muted,body.large-text .settings-help{font-size:calc(1em + 1px)}
+.settings-toggle input{width:20px;height:20px;flex:0 0 20px;accent-color:#8b5cf6;cursor:pointer}
+
 
 </style>
 </head>
@@ -153,19 +162,20 @@ body{background-color:var(--bg);background-image:radial-gradient(circle at 80% 5
       <h3>Account security</h3><p class="settings-help">VISHNU uses Google sign-in. Password changes are managed securely by Google, not inside this app.</p>
     </section>
     <section class="settings-panel" id="settings-appearance" role="tabpanel">
-      <h3>Appearance</h3><p class="settings-help">Your current VISHNU visual style.</p>
+      <h3>Appearance</h3><p class="settings-help">Tune how VISHNU looks on your screen.</p>
       <div class="settings-card">
-        <div class="settings-option"><div><strong>Color theme</strong><small>Dark violet glass</small></div><span class="settings-chip">Active</span></div>
-        <div class="settings-option"><div><strong>Navigation</strong><small>Floating pill navigation on mobile</small></div><span class="settings-chip">Enabled</span></div>
-        <div class="settings-option"><div><strong>Accent color</strong><small>Violet · #8B5CF6</small></div><span class="settings-swatch"></span></div>
+        <label class="settings-option settings-toggle"><span><strong>Compact Cards</strong><small>Tighter spacing for denser lists</small></span><input type="checkbox" id="compact-toggle"></label>
+        <label class="settings-option settings-toggle"><span><strong>Larger Text Scale</strong><small>Slightly boost readability across screens</small></span><input type="checkbox" id="large-text-toggle"></label>
+        <div class="settings-option"><div><strong>Color theme</strong><small>Dark violet glass · Floating navigation</small></div><span class="settings-chip">Active</span></div>
       </div>
     </section>
     <section class="settings-panel" id="settings-playback" role="tabpanel">
-      <h3>Playback</h3><p class="settings-help">Preferences for direct media links opened in VISHNU.</p>
+      <h3>Playback</h3><p class="settings-help">Control video defaults and captions.</p>
       <div class="settings-card">
-        <label class="settings-option settings-toggle"><span><strong>Autoplay video</strong><small>Start a selected video automatically when supported</small></span><input type="checkbox" id="pref-autoplay"></label>
-        <label class="settings-field"><span>Preferred quality</span><select id="pref-quality"><option value="auto">Auto (source decides)</option><option value="1080">1080p</option><option value="720">720p</option><option value="480">480p</option></select></label>
-        <p class="settings-help">Quality is a preference only. Actual resolution depends on the media source you provide.</p>
+        <label class="settings-option settings-toggle"><span><strong>Autoplay Next</strong><small>Automatically play the next item when a queue is available</small></span><input type="checkbox" id="pref-autoplay" checked></label>
+        <label class="settings-option settings-toggle"><span><strong>Subtitles by Default</strong><small>Enable captions when the supplied media includes subtitle tracks</small></span><input type="checkbox" id="pref-subtitles"></label>
+        <label class="settings-field"><span>Default Quality</span><select id="pref-quality"><option value="auto">Auto</option><option value="1080p">1080p HD</option><option value="720p">720p</option><option value="480p">480p Saver</option></select></label>
+        <p class="settings-help">Quality selection is a preference; the actual resolution depends on your media source.</p>
         <p class="settings-status" id="playback-status" aria-live="polite"></p>
       </div>
     </section>
