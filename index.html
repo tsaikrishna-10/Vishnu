@@ -150,7 +150,7 @@ window.showPage=showPage; window.saveKey=saveKey;
 function saveKey(){key=$('#tmdb-key').value.trim();localStorage.setItem('vishnu_tmdb',key);toast('TMDB key saved');load()}
 function playUrl(url){try{let u=new URL(url);if(!['http:','https:'].includes(u.protocol))throw 0;let v=$('#player');v.src=u.href;v.style.display='block';v.play().catch(()=>toast('Playback may not be supported for this format.'))}catch(e){toast('Enter a valid direct media URL.')}}
 function downloadUrl(url){try{let u=new URL(url);if(!['http:','https:'].includes(u.protocol))throw 0;let a=document.createElement('a');a.href=u.href;a.target='_blank';a.rel='noopener';a.click();toast('Opened source. Download availability depends on the source.')}catch(e){toast('Enter a valid direct media URL.')}}
-$('#search').addEventListener('keydown',async e=>{if(e.key==='Enter'){if(!key){showPage('settings');toast('Connect TMDB first');return}try{let d=await api('/search/multi?query='+encodeURIComponent(e.target.value)+'&include_adult=false&language=en-US&page=1');showPage('movies');cards(d.results.filter(x=>x.media_type!=='person'),'#movie-grid')}catch(err){toast(err.message)}}});
+$('#search').addEventListener('keydown',async e=>{if(e.key==='Enter'){if(!key){showPage('settings');toast('Connect TMDB first');return}try{let d=await api('/search/multi?query='+encodeURIComponent(e.target.value)+'&include_adult=false&language=en-US&page=1');cards(d.results.filter(x=>x.media_type!=='person'),'#search-results');$('#search-overlay').classList.add('open')}catch(err){toast(err.message)}}});
 $('#tmdb-key').value=key;if(key)load();
 
 /* UI wiring for the integrated glass layout */
