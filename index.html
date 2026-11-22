@@ -35,11 +35,51 @@ html,body{background:var(--bg);color:var(--white)}body{font-family:'Plus Jakarta
 @media(max-width:900px){.subpage .grid{grid-template-columns:repeat(4,minmax(0,1fr))}.hero{min-height:500px}.nav{gap:15px}}
 @media(max-width:600px){body{padding-bottom:90px}.top{height:62px;padding:0 16px;gap:8px}.mark{font-size:14px;letter-spacing:.17em;gap:8px}.symbol{width:31px;height:31px;border-radius:10px;font-size:19px}.nav{display:none}.right{gap:8px}.search{width:clamp(112px,34vw,170px);padding:9px 12px;font-size:12px}.avatar{width:34px;height:34px}.hero{min-height:510px;padding:30px 20px 34px;background-position:61% center}.hero h1{font-size:clamp(42px,11vw,54px);line-height:.99;margin:16px 0 12px}.hero p{font-size:13px;line-height:1.65}.actions{gap:9px;margin-top:19px}.btn{padding:12px 15px;font-size:13px}.section{padding:23px 17px}.section h2,.subpage>.section-head h2,.subpage>h2{font-size:20px}.section-head{gap:12px;align-items:baseline}.section-head span{font-size:10px;max-width:130px;text-align:right;line-height:1.35}#home .grid{gap:12px}#home .movie{flex-basis:41vw;max-width:175px}.poster{border-radius:13px}.movie h3{font-size:13px}.subpage{padding:27px 17px}.subpage .grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.detail{grid-template-columns:105px minmax(0,1fr);gap:16px}.detail>img{border-radius:12px}.detail h1{font-size:29px!important}.panel{padding:17px;border-radius:14px}.footer{padding:25px 17px 100px}.bottom{bottom:0;left:0;right:0;border-radius:0;justify-content:space-around;padding:9px 3px calc(9px + env(safe-area-inset-bottom))}.bottom button{font-size:10px;gap:4px}}
 
+
+/* Integrated VISHNU glass navigation, featured hero and search */
+.top{position:fixed;left:0;right:0;top:0;z-index:40;height:66px;background:linear-gradient(180deg,rgba(5,8,6,.94),rgba(5,8,6,.45));border-bottom:1px solid transparent;transition:background .25s,border-color .25s}
+.top.scrolled{background:rgba(5,8,6,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-color:var(--line)}
+main{padding-top:0}.hero{padding-top:105px;min-height:64vh;max-height:660px;align-items:flex-end;background-size:cover;background-position:center 22%}
+.hero:after{background:radial-gradient(circle at 80% 18%,rgba(16,185,129,.22),transparent 48%),linear-gradient(180deg,rgba(5,8,6,.18),rgba(5,8,6,.58) 58%,var(--bg))}
+.hero-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:13px;margin:0 0 10px}.hero-meta .rate{color:#6ee7b7;font-weight:800}.badge-4k{border:1px solid #ffffff40;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:700;color:#fff}
+.chips{display:flex;gap:9px;overflow-x:auto;padding:12px clamp(18px,5vw,72px) 8px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:8px 15px;border-radius:999px;background:var(--panel);border:1px solid #ffffff14;color:var(--muted);font-size:12px;font-weight:700}.chip.active{background:rgba(16,185,129,.16);border-color:#10b981;color:#6ee7b7}
+.icon-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line)!important;background:rgba(10,18,14,.78)!important;display:grid;place-items:center;color:var(--white)!important}
+.search-overlay{position:fixed;inset:0;z-index:60;background:rgba(5,8,6,.97);backdrop-filter:blur(22px);display:none;flex-direction:column;padding:18px}.search-overlay.open{display:flex}
+.search-top{display:flex;gap:10px;margin:0 0 16px}.search-top input{flex:1;min-width:0;height:46px;border-radius:13px;border:1px solid var(--line);background:var(--panel);color:var(--white);padding:0 15px;outline:none}
+.search-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;overflow-y:auto;padding-bottom:30px}
+.bottom{z-index:45;left:14px;right:14px;bottom:14px;height:64px;border:1px solid var(--line);border-radius:22px;background:rgba(8,16,12,.88);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 12px 32px #0009}
+.bottom button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px}.bottom button>span:first-child{font-size:20px;line-height:1}
+.toast{bottom:94px}
+@media(min-width:601px){.bottom{display:none}.search-results{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:600px){.top{height:62px;padding:0 16px}.hero{min-height:58vh;padding:90px 20px 30px}.hero h1{font-size:clamp(38px,10vw,54px)}.hero p{font-size:13px}.chips{padding:9px 17px 4px}.bottom{display:grid;grid-template-columns:repeat(5,1fr)}.search-results{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}}
+
 </style></head>
 <body>
-<header class="top"><div class="mark"><div class="symbol">V</div>VISHNU</div><nav class="nav"><button class="active" data-page="home">Home</button><button data-page="movies">Movies</button><button data-page="shows">TV Shows</button><button data-page="anime">Anime</button><button data-page="mylist">My List</button></nav><div class="right"><input id="search" class="search" placeholder="Search titles…"><button class="avatar" data-page="settings" aria-label="Settings">V</button></div></header>
+<header class="top" id="navbar">
+  <div class="mark" data-page="home"><div class="symbol">V</div>VISHNU</div>
+  <nav class="nav">
+    <button class="active" data-page="home">Home</button><button data-page="movies">Movies</button>
+    <button data-page="shows">TV Shows</button><button data-page="anime">Anime</button><button data-page="mylist">My List</button>
+  </nav>
+  <div class="right">
+    <button class="icon-btn" id="open-search" aria-label="Search"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+    <button class="avatar" data-page="settings" aria-label="Settings">V</button>
+  </div>
+</header>
 <main>
-<div id="home" class="page active"><section class="hero"><div class="hero-inner"><div class="eyebrow">The VISHNU collection</div><h1>Stories worth<br>staying in for.</h1><p>A considered universe of films and series. Discover your next favourite, keep your place, and enjoy cinema on your terms.</p><div class="actions"><button class="btn gold" onclick="showPage('movies')">Explore cinema ↗</button><button class="btn" onclick="showPage('mylist')">My watchlist</button></div></div></section><section class="section"><div class="section-head"><h2>Trending now</h2><span>Discover something remarkable</span></div><div id="trending" class="grid"><div class="empty">Add your TMDB API key in Settings to load live titles.</div></div></section><section class="section"><div class="section-head"><h2>Popular movies</h2><span>Curated for your next night in</span></div><div id="popular" class="grid"><div class="empty">Your cinema catalogue will appear here.</div></div></section></div>
+<div id="home" class="page active">
+<section class="hero" id="hero-banner" style="background-image:url('https://image.tmdb.org/t/p/original/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg')">
+<div class="hero-inner"><div class="eyebrow" id="hero-eyebrow">● VISHNU FEATURED</div>
+<h1 id="hero-title">Dune: Part Two</h1>
+<div class="hero-meta" id="hero-meta"><span class="rate">★ 8.3</span><span>2024</span><span class="badge-4k">4K HDR</span></div>
+<p id="hero-desc">Follow the mythic journey of Paul Atreides as he unites with Chani and the Fremen while on a path of revenge.</p>
+<div class="actions hero-btns-full"><button class="btn gold" id="hero-play">▶ Watch Now</button><button class="btn" id="hero-list">+ My List</button></div>
+</div></section>
+<div class="chips"><button class="chip active" data-page="home">All</button><button class="chip" data-page="movies">Movies</button><button class="chip" data-page="shows">TV Shows</button><button class="chip" data-page="anime">Anime</button><button class="chip" data-page="mylist">My List</button></div>
+<section class="section"><div class="section-head"><h2>Trending Now</h2><span>Swipe →</span></div><div id="trending" class="grid"><div class="empty">Add your TMDB API key in Settings to load live titles.</div></div></section>
+<section class="section"><div class="section-head"><h2>Popular Movies</h2><span>Top Picks</span></div><div id="popular" class="grid"><div class="empty">Your cinema catalogue will appear here.</div></div></section>
+</div>
 <div id="movies" class="page subpage"><div class="section-head"><h2>Movies</h2><span>Explore the collection</span></div><div id="movie-grid" class="grid"></div></div>
 <div id="shows" class="page subpage"><div class="section-head"><h2>TV Shows</h2><span>Stories across seasons</span></div><div id="show-grid" class="grid"></div></div>
 <div id="anime" class="page subpage"><div class="section-head"><h2>Anime</h2><span>Animation & anime</span></div><div id="anime-grid" class="grid"></div></div>
@@ -47,7 +87,13 @@ html,body{background:var(--bg);color:var(--white)}body{font-family:'Plus Jakarta
 <div id="downloads" class="page subpage"><div class="section-head"><h2>Downloads</h2><span>Offline library</span></div><div class="panel"><p class="muted">Downloads you start from a supported source will be managed by your browser or device. Only download content you have permission to save.</p><p id="download-note">No downloads recorded in this browser yet.</p></div></div>
 <div id="settings" class="page subpage"><h2>Settings</h2><div class="panel"><h3>VISHNU Account</h3><p id="auth-status" class="muted">Not signed in. Sign in to sync your watchlist across devices.</p><button class="btn gold" id="google-login">Continue with Google</button><button class="btn" id="google-logout" style="display:none">Sign out</button></div><div class="panel"><h3>Movie catalogue</h3><p class="muted">Connect your TMDB API key to load posters, descriptions, trending titles and search results. The key stays in this browser.</p><label class="field">TMDB API key<input id="tmdb-key" type="password" placeholder="Paste your TMDB API key"></label><button class="btn gold" onclick="saveKey()">Save & connect</button></div><div class="panel"><h3>Playback & sources</h3><p class="muted">VISHNU supports playback through sources you own or are authorized to access. Add a direct media URL on a title's detail screen when available. No third-party scraping or unauthorized streams are bundled.</p><label class="field">Default playback quality<select id="quality"><option>Auto</option><option>1080p</option><option>720p</option><option>480p</option></select></label></div><div class="panel"><h3>About VISHNU</h3><p class="muted">A premium cinema companion. Your watchlist is stored locally on this device.</p></div></div>
 <div id="detail" class="page subpage"></div>
-</main><nav class="bottom"><button class="active" data-page="home">⌂<span>Home</span></button><button data-page="movies">▣<span>Movies</span></button><button data-page="mylist">♡<span>My List</span></button><button data-page="downloads">↓<span>Downloads</span></button><button data-page="settings">⚙<span>Settings</span></button></nav><footer class="footer">VISHNU · Cinema, reimagined. <span style="float:right">Made for the love of stories.</span></footer><div class="toast" id="toast"></div>
+</main><div class="search-overlay" id="search-overlay"><div class="search-top"><input id="search" placeholder="Search movies, shows, anime…" autocomplete="off"><button class="btn" id="close-search" style="height:46px">Close</button></div><div id="search-results" class="search-results grid"><div class="empty">Type a title and press Enter to search TMDB.</div></div></div><nav class="bottom">
+<button class="active" data-page="home"><span>⌂</span><span>Home</span></button>
+<button data-page="movies"><span>▣</span><span>Movies</span></button>
+<button data-page="mylist"><span>♡</span><span>My List</span></button>
+<button data-page="downloads"><span>↓</span><span>Saved</span></button>
+<button data-page="settings"><span>⚙</span><span>Settings</span></button>
+</nav><footer class="footer">VISHNU · Cinema, reimagined. <span style="float:right">Made for the love of stories.</span></footer><div class="toast" id="toast"></div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
@@ -106,4 +152,15 @@ function playUrl(url){try{let u=new URL(url);if(!['http:','https:'].includes(u.p
 function downloadUrl(url){try{let u=new URL(url);if(!['http:','https:'].includes(u.protocol))throw 0;let a=document.createElement('a');a.href=u.href;a.target='_blank';a.rel='noopener';a.click();toast('Opened source. Download availability depends on the source.')}catch(e){toast('Enter a valid direct media URL.')}}
 $('#search').addEventListener('keydown',async e=>{if(e.key==='Enter'){if(!key){showPage('settings');toast('Connect TMDB first');return}try{let d=await api('/search/multi?query='+encodeURIComponent(e.target.value)+'&include_adult=false&language=en-US&page=1');showPage('movies');cards(d.results.filter(x=>x.media_type!=='person'),'#movie-grid')}catch(err){toast(err.message)}}});
 $('#tmdb-key').value=key;if(key)load();
+
+/* UI wiring for the integrated glass layout */
+const searchOverlay=$('#search-overlay');
+$('#open-search')?.addEventListener('click',()=>{searchOverlay.classList.add('open');setTimeout(()=>$('#search').focus(),40)});
+$('#close-search')?.addEventListener('click',()=>searchOverlay.classList.remove('open'));
+searchOverlay?.addEventListener('click',e=>{if(e.target===searchOverlay)searchOverlay.classList.remove('open')});
+document.querySelectorAll('.chips [data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+document.querySelector('.mark')?.addEventListener('click',()=>showPage('home'));
+window.addEventListener('scroll',()=>$('#navbar')?.classList.toggle('scrolled',window.scrollY>24),{passive:true});
+$('#hero-play')?.addEventListener('click',()=>detail(693134,'movie'));
+$('#hero-list')?.addEventListener('click',async()=>{try{const m=await api('/movie/693134?language=en-US');await saveTitle({...m,media_type:'movie'});}catch(e){toast(e.message)}});
 </script></body></html>
