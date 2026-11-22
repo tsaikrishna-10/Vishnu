@@ -311,8 +311,16 @@ function playUrl(value) {
     if (!["http:", "https:"].includes(url.protocol)) throw new Error();
     const player = $("#player");
     player.src = url.href; player.style.display = "block";
-    const autoplay = localStorage.getItem("vishnu_autoplay") === "true";
-    if (autoplay) player.play().catch(() => toast("Autoplay was blocked by your browser."));
+    // A deliberate tap on Play always starts playback; Autoplay Next is a queue preference.
+    player.play().catch(() => toast("Playback could not start. Check the media URL or browser support."));
+    player.addEventListener("loadedmetadata", () => {
+      const enableSubtitles = localStorage.getItem("vishnu_subtitles") === "true";
+      Array.from(player.textTracks || []).forEach(track => {
+        if (track.kind === "subtitles" || track.kind === "captions") {
+          track.mode = enableSubtitles ? "showing" : "disabled";
+        }
+      });
+    }, { once: true });
   } catch { toast("Enter a valid direct media URL."); }
 }
 function downloadUrl(value) {
@@ -353,7 +361,41 @@ renderList();
 if (tmdbCredential) loadHome();
 
 
-// Settings tabs and saved playback preferences.
+// VISHNU Settings Stage 2 — device-local preferences.
+const SETTINGS_KEY = "vishnu_settings_v2";
+const defaultSettings = {
+  compactUi: false,
+  largeText: false,
+  autoplayNext: true,
+  subtitles: false,
+  quality: "auto"
+};
+function readSettings() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    return {
+      ...defaultSettings,
+      ...stored,
+      autoplayNext: stored.autoplayNext ?? (localStorage.getItem("vishnu_autoplay") !== "false"),
+      quality: stored.quality || localStorage.getItem("vishnu_quality") || "auto"
+    };
+  } catch { return { ...defaultSettings }; }
+}
+const settings = readSettings();
+function persistSettings(message = "Settings saved on this device.") {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  localStorage.setItem("vishnu_autoplay", String(settings.autoplayNext));
+  localStorage.setItem("vishnu_subtitles", String(settings.subtitles));
+  localStorage.setItem("vishnu_quality", settings.quality);
+  const status = $("#playback-status");
+  if (status) status.textContent = message;
+}
+function applyAppearanceSettings() {
+  document.body.classList.toggle("compact-ui", settings.compactUi);
+  document.body.classList.toggle("large-text", settings.largeText);
+}
+applyAppearanceSettings();
+
 document.querySelectorAll("[data-settings-tab]").forEach(tab => {
   tab.addEventListener("click", () => {
     const target = tab.dataset.settingsTab;
@@ -368,20 +410,46 @@ document.querySelectorAll("[data-settings-tab]").forEach(tab => {
   });
 });
 
+const compactToggle = $("#compact-toggle");
+const largeTextToggle = $("#large-text-toggle");
 const autoplayPreference = $("#pref-autoplay");
+const subtitlesPreference = $("#pref-subtitles");
 const qualityPreference = $("#pref-quality");
+if (compactToggle) {
+  compactToggle.checked = settings.compactUi;
+  compactToggle.addEventListener("change", () => {
+    settings.compactUi = compactToggle.checked;
+    applyAppearanceSettings();
+    persistSettings("Compact card preference saved.");
+  });
+}
+if (largeTextToggle) {
+  largeTextToggle.checked = settings.largeText;
+  largeTextToggle.addEventListener("change", () => {
+    settings.largeText = largeTextToggle.checked;
+    applyAppearanceSettings();
+    persistSettings("Text size preference saved.");
+  });
+}
 if (autoplayPreference) {
-  autoplayPreference.checked = localStorage.getItem("vishnu_autoplay") === "true";
+  autoplayPreference.checked = settings.autoplayNext;
   autoplayPreference.addEventListener("change", () => {
-    localStorage.setItem("vishnu_autoplay", String(autoplayPreference.checked));
-    if ($("#playback-status")) $("#playback-status").textContent = "Autoplay preference saved on this device.";
+    settings.autoplayNext = autoplayPreference.checked;
+    persistSettings("Autoplay Next preference saved.");
+  });
+}
+if (subtitlesPreference) {
+  subtitlesPreference.checked = settings.subtitles;
+  subtitlesPreference.addEventListener("change", () => {
+    settings.subtitles = subtitlesPreference.checked;
+    persistSettings("Subtitle preference saved.");
   });
 }
 if (qualityPreference) {
-  qualityPreference.value = localStorage.getItem("vishnu_quality") || "auto";
+  qualityPreference.value = settings.quality;
   qualityPreference.addEventListener("change", () => {
-    localStorage.setItem("vishnu_quality", qualityPreference.value);
-    if ($("#playback-status")) $("#playback-status").textContent = "Quality preference saved. Actual quality depends on the media source.";
+    settings.quality = qualityPreference.value;
+    persistSettings("Quality preference saved. Actual resolution depends on the media source.");
   });
 }
 
