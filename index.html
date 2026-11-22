@@ -20,7 +20,7 @@
 </main><nav class="bottom"><button class="active" data-page="home">⌂<span>Home</span></button><button data-page="movies">▣<span>Movies</span></button><button data-page="mylist">♡<span>My List</span></button><button data-page="downloads">↓<span>Downloads</span></button><button data-page="settings">⚙<span>Settings</span></button></nav><footer class="footer">VISHNU · Cinema, reimagined. <span style="float:right">Made for the love of stories.</span></footer><div class="toast" id="toast"></div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithRedirect, getRedirectResult, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
 const firebaseConfig = {
   apiKey: "AIzaSyCjI14eA4XYINwDGFRi0Mo7PnN52q7QoH0",
@@ -67,9 +67,8 @@ async function loadCloudWatchlist(user){
    for(const item of saved){const k=(item.media_type||'movie')+'_'+item.id;await setDoc(doc(db,'users',user.uid,'watchlist',k),item)}
  }
 }
-$('#google-login').addEventListener('click',async()=>{try{await setPersistence(auth,browserLocalPersistence);await signInWithRedirect(auth,googleProvider)}catch(e){console.error('VISHNU Google sign-in failed:',e);toast('Google sign-in error: '+(e.code||e.message))}});
+$('#google-login').addEventListener('click',async()=>{const status=$('#auth-status');try{status.textContent='Opening Google sign-in…';await setPersistence(auth,browserLocalPersistence);const result=await signInWithPopup(auth,googleProvider);updateAccountUI(result.user);await loadCloudWatchlist(result.user);toast('Signed in successfully')}catch(e){console.error('VISHNU Google sign-in failed:',e);status.textContent='Sign-in failed: '+(e.code||e.message);toast('Google sign-in failed: '+(e.code||e.message))}});
 $('#google-logout').addEventListener('click',async()=>{try{await signOut(auth);toast('Signed out')}catch(e){toast(e.message)}});
-getRedirectResult(auth).then(result=>{if(result?.user){updateAccountUI(result.user);toast('Signed in successfully')}}).catch(e=>{console.error('VISHNU redirect result error:',e);toast('Google sign-in error: '+(e.code||e.message))});
 onAuthStateChanged(auth,async user=>{console.info('VISHNU auth state:',user?'signed in':'signed out');updateAccountUI(user);if(user){try{await loadCloudWatchlist(user)}catch(e){console.error('VISHNU cloud watchlist sync failed:',e);toast('Signed in, but cloud sync failed. Check Firestore rules.')}}});
 window.showPage=showPage; window.saveKey=saveKey;
 function saveKey(){key=$('#tmdb-key').value.trim();localStorage.setItem('vishnu_tmdb',key);toast('TMDB key saved');load()}
