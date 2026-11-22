@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
 import {
   getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup,
-  signOut, setPersistence, browserLocalPersistence
+  signOut, setPersistence, browserLocalPersistence, updateProfile
 } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, getDocs, setDoc
@@ -237,6 +237,14 @@ function renderList() { renderCards(saved, "#list-grid"); }
 function updateAccount(user) {
   const status = $("#auth-status"), login = $("#google-login"), logout = $("#google-logout");
   if (!status || !login || !logout) return;
+  const displayName = user?.displayName || user?.email?.split("@")[0] || "VISHNU User";
+  const email = user?.email || "Sign in to see your account details";
+  const initials = displayName.split(/\\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() || "").join("") || "V";
+  if ($("#settings-name")) $("#settings-name").textContent = displayName;
+  if ($("#settings-email")) $("#settings-email").textContent = email;
+  if ($("#settings-avatar")) $("#settings-avatar").textContent = initials;
+  if ($("#settings-account-state")) $("#settings-account-state").textContent = user ? "Connected" : "Guest";
+  if ($("#settings-display-name") && user && document.activeElement !== $("#settings-display-name")) $("#settings-display-name").value = user.displayName || "";
   if (user) {
     status.textContent = "Signed in as " + (user.displayName || user.email) + " · Cloud sync enabled";
     login.style.display = "none"; logout.style.display = "inline-flex";
@@ -303,7 +311,8 @@ function playUrl(value) {
     if (!["http:", "https:"].includes(url.protocol)) throw new Error();
     const player = $("#player");
     player.src = url.href; player.style.display = "block";
-    player.play().catch(() => toast("This media format may not play in your browser."));
+    const autoplay = localStorage.getItem("vishnu_autoplay") === "true";
+    if (autoplay) player.play().catch(() => toast("Autoplay was blocked by your browser."));
   } catch { toast("Enter a valid direct media URL."); }
 }
 function downloadUrl(value) {
@@ -342,3 +351,59 @@ window.addEventListener("scroll", () => $("#navbar")?.classList.toggle("scrolled
 if ($("#tmdb-key")) $("#tmdb-key").value = tmdbCredential;
 renderList();
 if (tmdbCredential) loadHome();
+
+
+// Settings tabs and saved playback preferences.
+document.querySelectorAll("[data-settings-tab]").forEach(tab => {
+  tab.addEventListener("click", () => {
+    const target = tab.dataset.settingsTab;
+    document.querySelectorAll("[data-settings-tab]").forEach(button => {
+      const active = button === tab;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
+    document.querySelectorAll(".settings-panel").forEach(panel => {
+      panel.classList.toggle("active", panel.id === "settings-" + target);
+    });
+  });
+});
+
+const autoplayPreference = $("#pref-autoplay");
+const qualityPreference = $("#pref-quality");
+if (autoplayPreference) {
+  autoplayPreference.checked = localStorage.getItem("vishnu_autoplay") === "true";
+  autoplayPreference.addEventListener("change", () => {
+    localStorage.setItem("vishnu_autoplay", String(autoplayPreference.checked));
+    if ($("#playback-status")) $("#playback-status").textContent = "Autoplay preference saved on this device.";
+  });
+}
+if (qualityPreference) {
+  qualityPreference.value = localStorage.getItem("vishnu_quality") || "auto";
+  qualityPreference.addEventListener("change", () => {
+    localStorage.setItem("vishnu_quality", qualityPreference.value);
+    if ($("#playback-status")) $("#playback-status").textContent = "Quality preference saved. Actual quality depends on the media source.";
+  });
+}
+
+$("#settings-save-name")?.addEventListener("click", async () => {
+  const input = $("#settings-display-name");
+  const status = $("#settings-name-status");
+  const name = input?.value.trim();
+  if (!name) {
+    if (status) status.textContent = "Display name cannot be empty.";
+    return;
+  }
+  if (!auth.currentUser) {
+    if (status) status.textContent = "Sign in with Google before changing your profile name.";
+    return;
+  }
+  try {
+    await updateProfile(auth.currentUser, { displayName: name });
+    updateAccount(auth.currentUser);
+    if (status) status.textContent = "Display name updated.";
+    toast("Profile name updated.");
+  } catch (error) {
+    console.error("VISHNU profile update:", error);
+    if (status) status.textContent = "Could not update name: " + (error.code || error.message);
+  }
+});
