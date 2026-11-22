@@ -100,6 +100,44 @@ body.large-text{font-size:106%}
 body.large-text .movie h3{font-size:14px}
 body.large-text .movie small,body.large-text .muted,body.large-text .settings-help{font-size:calc(1em + 1px)}
 .settings-toggle input{width:20px;height:20px;flex:0 0 20px;accent-color:#8b5cf6;cursor:pointer}
+
+/* Top 10 Today + Poster Feed — VISHNU violet glass */
+.top10-section{margin:10px 0 26px}
+.top10-header{display:flex;align-items:center;gap:12px;padding:0 18px 14px}
+.top10-red-bar{width:4px;height:36px;border-radius:4px;background:#a78bfa;box-shadow:0 0 12px rgba(167,139,250,.55);flex-shrink:0}
+.top10-title{font:800 21px Outfit,sans-serif;letter-spacing:-.01em;color:var(--text);line-height:1.15}
+.top10-sub{font-size:12.5px;font-weight:500;color:var(--muted);margin-top:2px}
+.top10-scroll{display:flex;gap:14px;overflow-x:auto;padding:4px 20px 8px 14px;scrollbar-width:none}
+.top10-scroll::-webkit-scrollbar{display:none}
+.top10-item{position:relative;flex-shrink:0;display:flex;align-items:flex-end;padding-left:52px;cursor:pointer;transition:transform .2s ease}
+.top10-item:active{transform:scale(.96)}
+.top10-rank{position:absolute;left:0;bottom:-8px;font:900 124px/.82 Outfit,sans-serif;user-select:none;pointer-events:none;z-index:1}
+.rank-1{background:linear-gradient(180deg,#d4af37 0%,#685624 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.rank-2{background:linear-gradient(180deg,#c4b5fd 0%,#6d28d9 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.rank-3{background:linear-gradient(180deg,#a78bfa 0%,#4c1d95 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.rank-default{background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.06));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.top10-item.rank-ten{padding-left:72px}.top10-item.rank-ten .top10-rank{letter-spacing:-.09em;font-size:114px}
+.top10-card{position:relative;z-index:2;width:142px;height:210px;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--border);box-shadow:-8px 10px 24px rgba(0,0,0,.78)}
+.top10-card img{width:100%;height:100%;object-fit:cover;display:block}
+.top10-kind{position:absolute;top:10px;right:10px;z-index:3;padding:4px 8px;border-radius:999px;background:rgba(12,8,22,.86);border:1px solid var(--border);backdrop-filter:blur(8px);font-size:9px;font-weight:800;color:#fff}
+.top10-poster-footer{position:absolute;inset:auto 0 0;padding:28px 10px 10px;background:linear-gradient(to top,rgba(0,0,0,.92) 15%,transparent);text-align:center}
+.top10-poster-title{font:800 11.5px Outfit,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#fff;line-height:1.2}
+.poster-feed-section{margin:22px 0 96px;padding:0 18px}
+.poster-feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.poster-feed-title{font:800 19px Outfit,sans-serif;color:var(--text)}
+.poster-feed-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(139,92,246,.14);color:var(--bright);border:1px solid var(--border)}
+.poster-feed-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.feed-poster-card{background:var(--surface);border:1px solid var(--border);border-radius:15px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .25s,box-shadow .25s;box-shadow:0 10px 24px rgba(0,0,0,.48)}
+.feed-poster-card:active{transform:scale(.97);border-color:var(--bright);box-shadow:0 0 0 1px var(--bright),0 8px 22px var(--glow)}
+.feed-poster-media{position:relative;width:100%;aspect-ratio:2/3;overflow:hidden;background:#08060d}
+.feed-poster-media img{width:100%;height:100%;object-fit:cover;display:block}
+.feed-rating-pill{position:absolute;top:8px;left:8px;padding:3px 7px;border-radius:7px;background:rgba(7,5,12,.86);backdrop-filter:blur(8px);color:#fbbf24;font-size:11px;font-weight:800;border:1px solid var(--border)}
+.feed-quality-pill{position:absolute;bottom:8px;right:8px;padding:3px 7px;border-radius:6px;background:#8b5cf6;color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.04em}
+.feed-poster-body{padding:10px 11px 12px}
+.feed-poster-name{font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-poster-meta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;align-items:center;justify-content:space-between}
+@media(min-width:700px){.poster-feed-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
 </style>
 </head>
 <body>
@@ -117,6 +155,8 @@ body.large-text .movie small,body.large-text .muted,body.large-text .settings-he
 <div id="home" class="page active">
 <section class="hero" id="hero-banner" style="background-image:url('https://image.tmdb.org/t/p/original/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg')"><div class="hero-inner"><div class="eyebrow" id="hero-eyebrow">● VISHNU FEATURED</div><h1 id="hero-title">Dune: Part Two</h1><div class="hero-meta" id="hero-meta"><span class="rate">★ 8.3</span><span>2024</span><span class="badge-4k">4K HDR</span></div><p id="hero-desc">Your cinema universe — movies, Korean dramas and anime.</p><div class="actions hero-btns-full"><button class="btn gold" id="hero-play">▶ Watch Now</button><button class="btn" id="hero-list">+ My List</button></div></div></section>
 <div class="chips"><button class="chip active" onclick="showPage('home')">All</button><button class="chip" onclick="showPage('movies')">Movies</button><button class="chip" onclick="showPage('kdramas')">K-Dramas</button><button class="chip" onclick="showPage('anime')">Anime</button><button class="chip" onclick="showPage('shows')">TV Shows</button><button class="chip" onclick="showPage('mylist')">My List</button></div>
+<section class="top10-section" id="top10Section"><div class="top10-header"><div class="top10-red-bar"></div><div><div class="top10-title">Top 10 today</div><div class="top10-sub">Trending titles · Updated with TMDB</div></div></div><div class="top10-scroll" id="top10Scroll"><div class="empty">Loading today's top titles…</div></div></section>
+<section class="poster-feed-section" id="posterFeedSection"><div class="poster-feed-header"><h2 class="poster-feed-title">Poster Feed</h2><span class="poster-feed-badge" id="posterFeedCount">Loading</span></div><div class="poster-feed-grid" id="posterFeedGrid"><div class="empty">Loading poster feed…</div></div></section>
 <section class="section"><div class="section-head"><h2>Trending Now</h2><span onclick="showPage('movies')">See All →</span></div><div id="trending" class="grid"><div class="empty">Connect TMDB in Settings to load titles.</div></div></section>
 <section class="section"><div class="section-head"><h2>Indian & Telugu Cinema</h2><span onclick="showPage('movies')">Explore →</span></div><div id="indian" class="grid"><div class="empty">Loading catalogue…</div></div></section>
 <section class="section"><div class="section-head"><h2>Popular K-Dramas</h2><span onclick="showPage('kdramas')">See All →</span></div><div id="kdrama-row" class="grid"><div class="empty">Loading catalogue…</div></div></section>
