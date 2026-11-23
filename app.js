@@ -463,7 +463,8 @@ window.addEventListener("message", event => {
       const current = JSON.parse(localStorage.getItem("vishnu_player_progress") || "{}");
       const media = payload.data;
       const key = `${media.mediaType || media.media_type || "movie"}_${media.tmdbId || media.id || "unknown"}`;
-      current[key] = { ...media, provider: event.origin, updatedAt: Date.now() };
+      current[key] = { ...(current[key] || {}), ...media, provider: event.origin, updatedAt: Date.now() };
+      renderContinueWatching();
       localStorage.setItem("vishnu_player_progress", JSON.stringify(current));
     } catch (error) { console.warn("VISHNU player progress could not be saved:", error); }
   }
@@ -619,6 +620,7 @@ function downloadUrl(value, title = "VISHNU media", remember = true) {
       const entries = readDownloadHistory();
       entries.unshift({ url: url.href, title: String(title || "VISHNU media").slice(0, 120), createdAt: Date.now() });
       localStorage.setItem(DOWNLOAD_HISTORY_KEY, JSON.stringify(entries.slice(0, 20)));
+      renderDownloadHub();
     }
     const link = document.createElement("a");
     link.href = url.href;
