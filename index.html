@@ -200,6 +200,71 @@ body.large-text .movie small,body.large-text .muted,body.large-text .settings-he
 .vishnu-detail-screen .magnet-details summary{cursor:pointer;font-weight:700}
 @media(max-width:420px){.vishnu-detail-screen .player-header{align-items:flex-start}.vishnu-detail-screen .player-tools{margin-left:auto}.vishnu-detail-screen .server-pill{padding:7px 11px}.vishnu-detail-screen .download-entry{align-items:flex-start;flex-direction:column}.vishnu-detail-screen .download-again{width:100%}}
 
+
+/* VISHNU 3.0 — premium cinematic streaming interface */
+:root{--bg:#08070b;--surface:#14121a;--glass:rgba(16,14,21,.82);--emerald:#8b5cf6;--bright:#a78bfa;--glow:rgba(139,92,246,.32);--border:rgba(255,255,255,.10);--text:#faf9fc;--muted:#aaa5b5}
+body{background:#08070b;background-image:radial-gradient(ellipse at 75% -10%,rgba(139,92,246,.15),transparent 42%);font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+.top{position:sticky;top:0;z-index:50;min-height:66px;padding:10px clamp(16px,4vw,52px);background:linear-gradient(180deg,rgba(8,7,11,.98),rgba(8,7,11,.78));backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.055)}
+.greeting-copy .brand-name{font:800 25px/1 Oswald,Impact,sans-serif;letter-spacing:.12em;color:#fff;text-shadow:0 2px 22px rgba(167,139,250,.22)}
+.avatar-badge{border-radius:11px;background:linear-gradient(145deg,#a78bfa,#4c1d95);color:#fff;box-shadow:0 5px 22px rgba(139,92,246,.26)}
+.right{background:transparent;border:0;padding:0}
+.icon-btn{background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.1)!important}
+.hero{min-height:clamp(500px,76vh,720px);max-height:760px;padding:100px clamp(20px,6vw,84px) 48px;background-position:center 24%;margin-top:-1px}
+.hero:after{background:linear-gradient(90deg,rgba(8,7,11,.92) 0%,rgba(8,7,11,.58) 42%,rgba(8,7,11,.08) 78%),linear-gradient(0deg,#08070b 0%,rgba(8,7,11,.06) 68%)}
+.hero-inner{max-width:590px}
+.eyebrow{background:rgba(139,92,246,.18);border-color:rgba(196,181,253,.3);color:#d8ccff;letter-spacing:.18em}
+.hero h1{font:800 clamp(38px,7vw,76px)/.98 Outfit,sans-serif;letter-spacing:-.055em;margin:18px 0 12px;text-wrap:balance}
+.hero-meta{color:#ddd8e5}.hero p{color:#e2dfea;font-size:14px;line-height:1.7;max-width:520px}
+.btn{height:48px;border-radius:9px;padding:0 22px;background:rgba(35,32,42,.82);border-color:rgba(255,255,255,.18);backdrop-filter:blur(12px)}
+.btn.gold{background:#fff;color:#111;border:0;box-shadow:none}
+.btn.gold:hover{background:#e9e4f2}.btn:active{transform:scale(.97)}
+.chips{padding:12px clamp(18px,5vw,72px) 22px;gap:10px}
+.chip{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);color:#d1cdd8}
+.chip.active{background:#fff;color:#111;border-color:#fff;box-shadow:none}
+.section{padding:12px clamp(18px,5vw,72px) 26px}
+.section-head{margin-bottom:14px}
+.section h2,.subpage h2{font:700 21px Outfit,sans-serif;letter-spacing:-.025em}
+.section-head span{color:#c4b5fd}
+#home .grid{gap:14px;scroll-snap-type:x mandatory}
+#home .movie{flex:0 0 clamp(118px,15vw,184px);max-width:184px}
+.poster{border-radius:9px;border:1px solid rgba(255,255,255,.09);box-shadow:0 9px 24px rgba(0,0,0,.35);background:#191720}
+.poster img{transition:transform .28s ease}
+.movie:hover .poster img{transform:scale(1.045)}
+.movie h3{font:600 13px Outfit,sans-serif;color:#f4f1f7;margin:9px 1px 3px}
+.movie small{color:#a9a3b2}
+.tag{background:rgba(8,7,11,.86);border-color:rgba(255,255,255,.16);color:#e9ddff}
+.top10-section{margin:14px 0 30px}
+.top10-header{padding:0 clamp(18px,5vw,72px) 14px}
+.top10-red-bar{background:#a78bfa;box-shadow:0 0 14px rgba(167,139,250,.45)}
+.top10-title{font-size:22px}.top10-scroll{padding-left:clamp(18px,5vw,72px);gap:18px}
+.poster-feed-section{padding:10px clamp(18px,5vw,72px) 28px}
+.poster-feed-header{margin-bottom:14px}
+.subpage{padding-top:94px}
+.subpage .grid{gap:18px 14px}
+.search-overlay{background:rgba(8,7,11,.97)}
+.search-top input{background:#17141d;border-color:rgba(255,255,255,.13)}
+.bottom{background:rgba(18,16,23,.92)!important;border-color:rgba(255,255,255,.12)!important;box-shadow:0 14px 40px #000c!important}
+.bottom button.active{background:#fff!important;color:#100d15!important}
+.settings-user-card,.settings-card,.panel{background:linear-gradient(145deg,#17141e,#100e15);border-color:rgba(255,255,255,.1)}
+.settings-tabs{background:#14111a;border-color:rgba(255,255,255,.1)}
+.settings-tab.active{background:#fff;color:#111}
+.vishnu-detail-screen .player-section,.vishnu-detail-screen .download-panel{border:1px solid rgba(255,255,255,.1);border-radius:14px}
+@media(max-width:600px){
+ .hero{min-height:570px;max-height:690px;padding:90px 20px 32px;background-position:58% center}
+ .hero:after{background:linear-gradient(0deg,#08070b 0%,rgba(8,7,11,.78) 28%,rgba(8,7,11,.12) 78%),linear-gradient(90deg,rgba(8,7,11,.3),transparent)}
+ .hero h1{font-size:clamp(38px,11vw,54px)}
+ .hero p{font-size:13px;max-width:95%}
+ #home .movie{flex-basis:36vw;max-width:150px}
+ .section{padding-left:16px;padding-right:16px}
+ .section h2{font-size:19px}
+ .top10-header{padding-left:16px;padding-right:16px}
+ .top10-scroll{padding-left:14px}
+ .poster-feed-section{padding-left:16px;padding-right:16px}
+ .subpage{padding-left:16px;padding-right:16px}
+ .subpage .grid,.search-results{gap:12px 9px}
+ .bottom{background:rgba(16,14,20,.94)!important}
+}
+
 </style>
 </head>
 <body>
@@ -219,7 +284,7 @@ body.large-text .movie small,body.large-text .muted,body.large-text .settings-he
 <div class="chips"><button class="chip active" onclick="showPage('home')">All</button><button class="chip" onclick="showPage('movies')">Movies</button><button class="chip" onclick="showPage('kdramas')">K-Dramas</button><button class="chip" onclick="showPage('anime')">Anime</button><button class="chip" onclick="showPage('shows')">TV Shows</button><button class="chip" onclick="showPage('mylist')">My List</button></div>
 <section class="top10-section" id="top10Section"><div class="top10-header"><div class="top10-red-bar"></div><div><div class="top10-title">Top 10 today</div><div class="top10-sub">Trending titles · Updated with TMDB</div></div></div><div class="top10-scroll" id="top10Scroll"><div class="empty">Loading today's top titles…</div></div></section>
 <section class="poster-feed-section" id="posterFeedSection"><div class="poster-feed-header"><h2 class="poster-feed-title">Poster Feed</h2><span class="poster-feed-badge" id="posterFeedCount">Loading</span></div><div class="poster-feed-grid" id="posterFeedGrid"><div class="empty">Loading poster feed…</div></div></section>
-<section class="section"><div class="section-head"><h2>Trending Now</h2><span onclick="showPage('movies')">See All →</span></div><div id="trending" class="grid"><div class="empty">Connect TMDB in Settings to load titles.</div></div></section>
+<section class="section"><div class="section-head"><h2>Trending Now</h2><span onclick="showPage('movies')">See All →</span></div><div id="trending" class="grid"><div class="empty">Loading your cinema universe…</div></div></section>
 <section class="section"><div class="section-head"><h2>Indian & Telugu Cinema</h2><span onclick="showPage('movies')">Explore →</span></div><div id="indian" class="grid"><div class="empty">Loading catalogue…</div></div></section>
 <section class="section"><div class="section-head"><h2>Popular K-Dramas</h2><span onclick="showPage('kdramas')">See All →</span></div><div id="kdrama-row" class="grid"><div class="empty">Loading catalogue…</div></div></section>
 <section class="section"><div class="section-head"><h2>Top Anime</h2><span onclick="showPage('anime')">See All →</span></div><div id="anime-row" class="grid"><div class="empty">Loading catalogue…</div></div></section>
