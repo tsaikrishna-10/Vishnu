@@ -240,77 +240,108 @@ async function detail(id, type = "movie") {
     const detailView = $("#detail");
     if (!detailView) { toast("Detail view is missing from index.html."); return; }
     detailView.innerHTML = `
-      <div class="detail-hero" style="background-image:linear-gradient(180deg,rgba(7,5,12,.25),rgba(7,5,12,.82) 65%,var(--bg)),url('${bg}')">
-        <div class="detail-grid">${poster}<div><div class="eyebrow">${kind === "tv" ? "TV SERIES" : "FEATURED FILM"}</div>
-        <h1>${title}</h1><div class="hero-meta"><span class="rate">★ ${Number(item.vote_average || 0).toFixed(1)}</span>
-        <span>${(item.release_date || item.first_air_date || "").slice(0,4)}</span></div></div></div>
-      </div><p class="muted" style="margin-bottom:18px">${overview}</p>
-      <div class="actions" style="margin-bottom:18px"><button class="btn gold" id="save-title">+ My List</button><button class="btn" id="detail-back">← Back</button></div>
-      <div class="panel" id="external-player-panel">
-        <h3>Watch on VISHNU</h3>
-        <p class="muted">Choose an external player. Playback availability, quality and language options are provided by the selected service.</p>
-        ${kind === "tv" ? `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px"><label class="field">Season<input id="player-season" type="number" min="1" value="1"></label><label class="field">Episode<input id="player-episode" type="number" min="1" value="1"></label></div>` : ""}
-        <div class="actions">
-          <button class="btn gold" id="player-mapple" type="button">Mapple Player</button>
-          <button class="btn" id="player-vidora" type="button">Vidora Player</button>
+      <div class="vishnu-detail-screen">
+        <section class="detail-hero" style="background-image:linear-gradient(180deg,rgba(5,5,6,.28),rgba(5,5,6,.92) 68%,#050506),url('${bg}')">
+          <div class="vishnu-detail-hero">
+            ${poster.replace('<img ', '<img class="poster" ')}
+            <div class="vishnu-detail-copy">
+              <div class="eyebrow">${kind === "tv" ? "TV SERIES" : "FEATURED FILM"}</div>
+              <h1 class="movie-title">${title}</h1>
+              <div class="meta"><span class="rate">★ ${Number(item.vote_average || 0).toFixed(1)}</span> &nbsp;•&nbsp; ${(item.release_date || item.first_air_date || "").slice(0,4)}</div>
+              <p class="synopsis">${overview}</p>
+            </div>
+          </div>
+        </section>
+        <div class="actions-row">
+          <button id="playBtn" class="btn btn-play" type="button">▶ Play</button>
+          <button id="downloadBtn" class="btn btn-secondary" type="button">⬇ Download</button>
+          <button id="watchlistBtn" class="btn btn-secondary" type="button">+ Watchlist</button>
         </div>
-        <div id="external-player-status" class="muted" style="margin-top:10px">Select a player to load playback.</div>
-        <div style="position:relative;width:100%;aspect-ratio:16/9;margin-top:14px;background:#000;border:1px solid var(--border);border-radius:14px;overflow:hidden">
-          <iframe id="external-player-frame" title="VISHNU external video player" src="about:blank" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
-        </div>
-        <p class="muted" style="margin-top:10px;font-size:11px">External player services are not operated by VISHNU. Use content you are authorised to access. Watch Party is not enabled.</p>
-      </div>
-      <div class="panel"><h3>Download with Flud</h3><p class="muted">Paste a magnet link for content you own or are authorised to download. Flud must be installed on your Android device.</p>
-      <label class="field">Magnet link<input id="flud-magnet" type="text" inputmode="url" placeholder="magnet:?xt=urn:btih:…"></label>
-      <div class="actions"><button class="btn gold" id="open-flud">↓ Open in Flud</button></div>
-      <p class="muted" style="margin-top:10px;font-size:12px">VISHNU does not provide torrent files or search for copyrighted copies. The magnet link is supplied by you.</p></div>
-      <div class="panel"><h3>Play from your source</h3><p class="muted">Use a direct media URL you own or are authorised to access.</p>
-      <label class="field">Media URL<input id="media-url" type="url" placeholder="https://…"></label>
-      <div class="actions"><button class="btn gold" id="play">▶ Play</button><button class="btn" id="download">Open download</button></div>
-      <video id="player" controls playsinline style="display:none;width:100%;margin-top:16px;border-radius:12px;background:#000"></video></div>`;
-    $("#save-title").onclick = () => saveTitle(item);
-    $("#detail-back").onclick = () => showPage("home");
-    const externalFrame = $("#external-player-frame");
-    const externalStatus = $("#external-player-status");
-    const loadExternalPlayer = provider => {
+        <section id="playerSection" class="player-section" aria-live="polite">
+          <div class="player-header">
+            <div class="server-switcher" role="tablist" aria-label="Video Server">
+              <button id="mappleBtn" class="server-pill active" type="button" data-server="mapple" role="tab" aria-selected="true">Mapple</button>
+              <button id="vidoraBtn" class="server-pill" type="button" data-server="vidora" role="tab" aria-selected="false">Vidora</button>
+            </div>
+          </div>
+          ${kind === "tv" ? `<div class="episode-selectors"><label class="field">Season<input id="player-season" type="number" min="1" value="1"></label><label class="field">Episode<input id="player-episode" type="number" min="1" value="1"></label><button id="reloadEpisodeBtn" class="btn btn-secondary" type="button">Load episode</button></div>` : ""}
+          <div class="player-frame-wrap">
+            <iframe id="videoPlayerFrame" title="VISHNU video player" src="about:blank" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          </div>
+          <p id="playerStatus" class="player-status">Choose a server to start playback.</p>
+        </section>
+        <section id="downloadPanel" class="download-panel">
+          <h3>Download options</h3>
+          <p class="muted">Use a direct media URL or a magnet link for content you own or are authorised to download.</p>
+          <label class="field">Media URL<input id="media-url" type="url" placeholder="https://…"></label>
+          <div class="actions"><button class="btn btn-secondary" id="download-direct" type="button">Open download</button></div>
+          <label class="field">Magnet link<input id="flud-magnet" type="text" inputmode="url" placeholder="magnet:?xt=urn:btih:…"></label>
+          <div class="actions"><button class="btn btn-secondary" id="open-flud" type="button">Open in Flud</button></div>
+          <p class="muted">VISHNU does not provide torrent files or search for copyrighted copies. Links are supplied by you.</p>
+        </section>
+      </div>`;
+    const watchlistBtn = $("#watchlistBtn");
+    const playerSection = $("#playerSection");
+    const playerFrame = $("#videoPlayerFrame");
+    const playerStatus = $("#playerStatus");
+    let activeProvider = "mapple";
+    const setPlayerTab = provider => {
+      activeProvider = provider;
+      $("#mappleBtn")?.classList.toggle("active", provider === "mapple");
+      $("#vidoraBtn")?.classList.toggle("active", provider === "vidora");
+      $("#mappleBtn")?.setAttribute("aria-selected", String(provider === "mapple"));
+      $("#vidoraBtn")?.setAttribute("aria-selected", String(provider === "vidora"));
+    };
+    const loadPlayer = provider => {
+      setPlayerTab(provider);
       const season = Math.max(1, Number($("#player-season")?.value || 1));
       const episode = Math.max(1, Number($("#player-episode")?.value || 1));
       const params = new URLSearchParams({ title: "true", poster: "true" });
-      let src = "";
+      let src;
       if (provider === "mapple") {
         params.set("autoPlay", "false");
-        params.set("theme", "8B5CF6");
+        params.set("theme", "FFFFFF");
         src = kind === "tv"
           ? `https://mapple.fun/watch/tv/${id}-${season}-${episode}?${params.toString()}`
           : `https://mapple.fun/watch/movie/${id}?${params.toString()}`;
       } else {
         params.set("autoplay", "false");
-        params.set("primaryColor", "8B5CF6");
-        params.set("secondaryColor", "21143A");
-        params.set("iconColor", "FFFFFF");
+        params.set("primaryColor", "FFFFFF");
+        params.set("secondaryColor", "191A1D");
+        params.set("iconColor", "09090B");
         src = kind === "tv"
           ? `https://vidora.ac/tv/${id}/${season}/${episode}?${params.toString()}`
           : `https://vidora.ac/movie/${id}?${params.toString()}`;
       }
-      externalFrame.src = src;
-      externalStatus.textContent = `${provider === "mapple" ? "Mapple" : "Vidora"} player loaded. If playback does not start, try the other player.`;
-      $("#player-mapple")?.classList.toggle("gold", provider === "mapple");
-      $("#player-vidora")?.classList.toggle("gold", provider === "vidora");
+      playerFrame.src = src;
+      playerStatus.textContent = `${provider === "mapple" ? "Mapple" : "Vidora"} selected. Loading player…`;
     };
-    $("#player-mapple")?.addEventListener("click", () => loadExternalPlayer("mapple"));
-    $("#player-vidora")?.addEventListener("click", () => loadExternalPlayer("vidora"));
-    $("#play").onclick = () => playUrl($("#media-url").value);
-    $("#download").onclick = () => downloadUrl($("#media-url").value);
-    $("#open-flud").onclick = () => {
+    $("#playBtn")?.addEventListener("click", () => {
+      playerSection.classList.add("open");
+      loadPlayer(activeProvider);
+      playerSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    $("#mappleBtn")?.addEventListener("click", () => loadPlayer("mapple"));
+    $("#vidoraBtn")?.addEventListener("click", () => loadPlayer("vidora"));
+    $("#reloadEpisodeBtn")?.addEventListener("click", () => loadPlayer(activeProvider));
+    $("#downloadBtn")?.addEventListener("click", () => {
+      $("#downloadPanel")?.classList.toggle("open");
+      $("#downloadPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+    watchlistBtn?.addEventListener("click", async () => {
+      await saveTitle(item);
+      watchlistBtn.classList.add("active");
+      watchlistBtn.textContent = "✓ Watchlist";
+    });
+    $("#download-direct")?.addEventListener("click", () => downloadUrl($("#media-url")?.value));
+    $("#open-flud")?.addEventListener("click", () => {
       const value = $("#flud-magnet")?.value.trim();
       if (!value || !/^magnet:\?xt=urn:btih:[a-z0-9]{32,40}/i.test(value)) {
         toast("Paste a valid BitTorrent magnet link first.");
         return;
       }
-      // Android will offer Flud (if installed and registered for magnet links).
-      // Other devices may show an app chooser or report that no handler exists.
       window.location.href = value;
-    };
+    });
   } catch (error) { toast(error.message); }
 }
 
