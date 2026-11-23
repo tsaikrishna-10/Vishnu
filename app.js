@@ -72,17 +72,40 @@ document.addEventListener("click", event => {
   if (button) { event.preventDefault(); showPage(button.dataset.page); }
 }, true);
 
-async function tmdb(path) {
-  // All devices use the same Vercel server-side proxy; no client-side TMDB key is needed.
-  const response = await fetch("/api/tmdb?path=" + encodeURIComponent(path), {
-    headers: { accept: "application/json" }
-  });
-  if (!response.ok) {
-    let detail = "";
-    try { detail = (await response.json()).error || ""; } catch {}
-    throw new Error(detail || `TMDB request failed (${response.status}).`);
-  }
-  return response.json();
+const tmdbCache = new Map();
+const tmdbInflight = new Map();
+async function tmdb(path, options = {}) {
+  // Shared request cache + in-flight deduplication prevents duplicate catalogue calls.
+  const key = String(path);
+  const cached = tmdbCache.get(key);
+  if (!options.force && cached && Date.now() - cached.time < 180000) return cached.data;
+  if (!options.force && tmdbInflight.has(key)) return tmdbInflight.get(key);
+  const request = (async () => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch("/api/tmdb?path=" + encodeURIComponent(key), {
+        headers: { accept: "application/json" },
+        signal: controller.signal
+      });
+      if (!response.ok) {
+        let detail = "";
+        try { detail = (await response.json()).error || ""; } catch {}
+        throw new Error(detail || `TMDB request failed (${response.status}).`);
+      }
+      const data = await response.json();
+      tmdbCache.set(key, { data, time: Date.now() });
+      return data;
+    } catch (error) {
+      if (error.name === "AbortError") throw new Error("Catalogue request timed out. Please try again.");
+      throw error;
+    } finally {
+      window.clearTimeout(timeout);
+      tmdbInflight.delete(key);
+    }
+  })();
+  tmdbInflight.set(key, request);
+  return request;
 }
 
 function normalise(item, type) {
@@ -177,39 +200,47 @@ function renderTop10AndPosterFeed(items) {
 }
 
 async function loadHome() {
-  try {
-    const requests = [
-      tmdb("/trending/all/week?language=en-US"),
-      tmdb("/movie/popular?language=en-US&page=1"),
-      tmdb("/movie/top_rated?language=en-US&page=1"),
-      tmdb("/discover/movie?with_original_language=te|hi&sort_by=popularity.desc&page=1"),
-      tmdb("/discover/tv?with_original_language=ko&sort_by=popularity.desc&page=1"),
-      tmdb("/discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&page=1"),
-      tmdb("/tv/popular?language=en-US&page=1")
-    ];
-    const [trending, popular, topRated, indian, kdramas, anime, shows] = await Promise.all(requests);
-    const featured = trending.results?.find(x => x.backdrop_path) || trending.results?.[0];
-    setHero(featured);
-    renderTop10AndPosterFeed(trending.results);
-    renderCards(trending.results, "#trending");
-    renderCards(popular.results, "#popular", "movie");
-    renderCards(topRated.results, "#toprated", "movie");
-    renderCards(indian.results, "#indian", "movie");
-    renderCards(kdramas.results, "#kdrama-row", "tv");
-    renderCards(anime.results, "#anime-row", "tv");
-    renderCards(popular.results, "#movie-grid", "movie");
-    renderCards(kdramas.results, "#kdrama-grid", "tv");
-    renderCards(anime.results, "#anime-grid", "tv");
-    renderCards(shows.results, "#show-grid", "tv");
-  } catch (error) { console.error("VISHNU catalogue:", error); toast(error.message); }
+  const jobs = [
+    ["/trending/all/week?language=en-US", data => {
+      const featured = data.results?.find(x => x.backdrop_path) || data.results?.[0];
+      if (featured) setHero(featured);
+      renderTop10AndPosterFeed(data.results);
+      renderCards(data.results, "#trending");
+    }],
+    ["/movie/popular?language=en-US&page=1", data => {
+      renderCards(data.results, "#popular", "movie");
+      renderCards(data.results, "#movie-grid", "movie");
+    }],
+    ["/movie/top_rated?language=en-US&page=1", data => renderCards(data.results, "#toprated", "movie")],
+    ["/discover/movie?with_original_language=te|hi&sort_by=popularity.desc&page=1", data => renderCards(data.results, "#indian", "movie")],
+    ["/discover/tv?with_original_language=ko&sort_by=popularity.desc&page=1", data => {
+      renderCards(data.results, "#kdrama-row", "tv");
+      renderCards(data.results, "#kdrama-grid", "tv");
+    }],
+    ["/discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&page=1", data => {
+      renderCards(data.results, "#anime-row", "tv");
+      renderCards(data.results, "#anime-grid", "tv");
+    }],
+    ["/tv/popular?language=en-US&page=1", data => renderCards(data.results, "#show-grid", "tv")]
+  ];
+  const results = await Promise.allSettled(jobs.map(([path, render]) =>
+    tmdb(path).then(data => { render(data); return path; })
+  ));
+  const failures = results.filter(result => result.status === "rejected");
+  if (failures.length) {
+    console.error("VISHNU catalogue partial failures:", failures.map(x => x.reason));
+    if (failures.length === jobs.length) toast(failures[0].reason?.message || "Catalogue unavailable. Please retry.");
+    else toast("Some catalogue rows could not load. Other sections are ready.");
+  }
 }
-
 async function loadPage(id, append = true) {
   const config = pageConfig[id];
   if (!config) return;
   if (pageLocks.has(id)) return;
   pageLocks.add(id);
-  const page = append ? pages[id] + 1 : 1;
+  const targetBeforeLoad = $(config.target);
+  const hasCards = Boolean(targetBeforeLoad?.querySelector(".movie"));
+  const page = append && hasCards ? pages[id] + 1 : 1;
   try {
     const data = await tmdb(config.endpoint + (config.endpoint.includes("?") ? "&" : "?") + `language=en-US&page=${page}`);
     const target = $(config.target);
