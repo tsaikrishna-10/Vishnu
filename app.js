@@ -263,6 +263,11 @@ async function detail(id, type = "movie") {
               <button id="mappleBtn" class="server-pill active" type="button" data-server="mapple" role="tab" aria-selected="true">Mapple</button>
               <button id="vidoraBtn" class="server-pill" type="button" data-server="vidora" role="tab" aria-selected="false">Vidora</button>
             </div>
+            <div class="player-tools">
+              <button id="playerReloadBtn" class="player-tool" type="button" aria-label="Reload player" title="Reload">↻</button>
+              <button id="playerFullscreenBtn" class="player-tool" type="button" aria-label="Fullscreen" title="Fullscreen">⛶</button>
+              <button id="playerCloseBtn" class="player-tool" type="button" aria-label="Close player" title="Close">×</button>
+            </div>
           </div>
           ${kind === "tv" ? `<div class="episode-selectors"><label class="field">Season<input id="player-season" type="number" min="1" value="1"></label><label class="field">Episode<input id="player-episode" type="number" min="1" value="1"></label><button id="reloadEpisodeBtn" class="btn btn-secondary" type="button">Load episode</button></div>` : ""}
           <div class="player-frame-wrap">
@@ -271,13 +276,17 @@ async function detail(id, type = "movie") {
           <p id="playerStatus" class="player-status">Choose a server to start playback.</p>
         </section>
         <section id="downloadPanel" class="download-panel">
-          <h3>Download options</h3>
-          <p class="muted">Use a direct media URL or a magnet link for content you own or are authorised to download.</p>
+          <h3>Download manager</h3>
+          <p class="muted">Add a direct media URL you own or are authorised to download. The browser handles the actual transfer; some hosts may open the media instead of downloading it.</p>
           <label class="field">Media URL<input id="media-url" type="url" placeholder="https://…"></label>
-          <div class="actions"><button class="btn btn-secondary" id="download-direct" type="button">Open download</button></div>
-          <label class="field">Magnet link<input id="flud-magnet" type="text" inputmode="url" placeholder="magnet:?xt=urn:btih:…"></label>
-          <div class="actions"><button class="btn btn-secondary" id="open-flud" type="button">Open in Flud</button></div>
-          <p class="muted">VISHNU does not provide torrent files or search for copyrighted copies. Links are supplied by you.</p>
+          <div class="actions"><button class="btn btn-secondary" id="download-direct" type="button">↓ Download to device</button></div>
+          <div class="download-queue-head"><strong>Recent downloads</strong><button id="clear-downloads" class="download-clear" type="button">Clear</button></div>
+          <div id="downloadQueue" class="download-queue"><p class="muted">Your download activity will appear here.</p></div>
+          <details class="magnet-details"><summary>Open a magnet link in Flud</summary>
+            <label class="field">Magnet link<input id="flud-magnet" type="text" inputmode="url" placeholder="magnet:?xt=urn:btih:…"></label>
+            <div class="actions"><button class="btn btn-secondary" id="open-flud" type="button">Open in Flud</button></div>
+          </details>
+          <p class="muted">Download availability depends on the source, CORS, browser and provider permissions. VISHNU cannot extract downloads from protected embedded players.</p>
         </section>
       </div>`;
     const watchlistBtn = $("#watchlistBtn");
@@ -285,6 +294,7 @@ async function detail(id, type = "movie") {
     const playerFrame = $("#videoPlayerFrame");
     const playerStatus = $("#playerStatus");
     let activeProvider = "mapple";
+    let playerLoadToken = 0;
     const setPlayerTab = provider => {
       activeProvider = provider;
       $("#mappleBtn")?.classList.toggle("active", provider === "mapple");
@@ -313,9 +323,40 @@ async function detail(id, type = "movie") {
           ? `https://vidora.ac/tv/${id}/${season}/${episode}?${params.toString()}`
           : `https://vidora.ac/movie/${id}?${params.toString()}`;
       }
-      playerFrame.src = src;
-      playerStatus.textContent = `${provider === "mapple" ? "Mapple" : "Vidora"} selected. Loading player…`;
+      const token = ++playerLoadToken;
+      playerFrame.src = "about:blank";
+      playerStatus.textContent = `${provider === "mapple" ? "Mapple" : "Vidora"} selected · connecting…`;
+      window.setTimeout(() => {
+        if (token !== playerLoadToken) return;
+        playerFrame.src = src;
+        playerStatus.textContent = `${provider === "mapple" ? "Mapple" : "Vidora"} connected · waiting for playback…`;
+        window.setTimeout(() => {
+          if (token === playerLoadToken && playerStatus.textContent.includes("waiting for playback")) {
+            playerStatus.textContent = "Still loading? Try Reload or switch to the other player.";
+          }
+        }, 18000);
+      }, 80);
     };
+    playerFrame.addEventListener("load", () => {
+      if (playerFrame.src && playerFrame.src !== "about:blank") {
+        playerStatus.textContent = `${activeProvider === "mapple" ? "Mapple" : "Vidora"} player frame loaded. Playback controls are provided by the selected source.`;
+      }
+    });
+    $("#playerReloadBtn")?.addEventListener("click", () => loadPlayer(activeProvider));
+    $("#playerFullscreenBtn")?.addEventListener("click", async () => {
+      const frameWrap = $(".player-frame-wrap");
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else if (frameWrap?.requestFullscreen) await frameWrap.requestFullscreen();
+        else toast("Fullscreen is not supported by this browser.");
+      } catch { toast("Could not enter fullscreen. Try your browser's fullscreen control."); }
+    });
+    $("#playerCloseBtn")?.addEventListener("click", () => {
+      playerLoadToken++;
+      playerFrame.src = "about:blank";
+      playerSection.classList.remove("open");
+      playerStatus.textContent = "Player closed.";
+    });
     $("#playBtn")?.addEventListener("click", () => {
       playerSection.classList.add("open");
       loadPlayer(activeProvider);
@@ -333,7 +374,16 @@ async function detail(id, type = "movie") {
       watchlistBtn.classList.add("active");
       watchlistBtn.textContent = "✓ Watchlist";
     });
-    $("#download-direct")?.addEventListener("click", () => downloadUrl($("#media-url")?.value));
+    $("#download-direct")?.addEventListener("click", () => {
+      const url = $("#media-url")?.value;
+      if (downloadUrl(url, item.title || item.name || "VISHNU media")) renderDownloadQueue();
+    });
+    $("#clear-downloads")?.addEventListener("click", () => {
+      localStorage.removeItem("vishnu_download_history");
+      renderDownloadQueue();
+      toast("Download history cleared.");
+    });
+    renderDownloadQueue();
     $("#open-flud")?.addEventListener("click", () => {
       const value = $("#flud-magnet")?.value.trim();
       if (!value || !/^magnet:\?xt=urn:btih:[a-z0-9]{32,40}/i.test(value)) {
@@ -462,13 +512,50 @@ function playUrl(value) {
     }, { once: true });
   } catch { toast("Enter a valid direct media URL."); }
 }
-function downloadUrl(value) {
+const DOWNLOAD_HISTORY_KEY = "vishnu_download_history";
+function readDownloadHistory() {
+  try { return JSON.parse(localStorage.getItem(DOWNLOAD_HISTORY_KEY) || "[]").slice(0, 20); }
+  catch { return []; }
+}
+function renderDownloadQueue() {
+  const queue = $("#downloadQueue");
+  if (!queue) return;
+  const entries = readDownloadHistory();
+  if (!entries.length) {
+    queue.innerHTML = '<p class="muted">No downloads started on this device yet.</p>';
+    return;
+  }
+  queue.innerHTML = entries.map(entry => `<div class="download-entry">
+    <div class="download-entry-copy"><strong>${escapeHtml(entry.title)}</strong><small>${new Date(entry.createdAt).toLocaleString()}</small></div>
+    <button class="download-again" type="button" data-download-url="${escapeHtml(entry.url)}" data-download-title="${escapeHtml(entry.title)}">Download again</button>
+  </div>`).join("");
+  queue.querySelectorAll("[data-download-url]").forEach(button => button.addEventListener("click", () => {
+    downloadUrl(button.dataset.downloadUrl, button.dataset.downloadTitle, false);
+  }));
+}
+function downloadUrl(value, title = "VISHNU media", remember = true) {
   try {
-    const url = new URL(value);
+    const url = new URL(String(value || "").trim());
     if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+    if (remember) {
+      const entries = readDownloadHistory();
+      entries.unshift({ url: url.href, title: String(title || "VISHNU media").slice(0, 120), createdAt: Date.now() });
+      localStorage.setItem(DOWNLOAD_HISTORY_KEY, JSON.stringify(entries.slice(0, 20)));
+    }
     const link = document.createElement("a");
-    link.href = url.href; link.target = "_blank"; link.rel = "noopener"; link.click();
-  } catch { toast("Enter a valid direct media URL."); }
+    link.href = url.href;
+    link.download = (String(title || "VISHNU media").replace(/[^a-z0-9-_ ]/gi, "").trim() || "VISHNU-media");
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    toast("Download requested. Check your browser downloads.");
+    return true;
+  } catch {
+    toast("Enter a valid direct HTTP or HTTPS media URL.");
+    return false;
+  }
 }
 
 $("#open-search")?.addEventListener("click", () => {

@@ -177,6 +177,29 @@ body.large-text .movie small,body.large-text .muted,body.large-text .settings-he
 @media(max-width:360px){.vishnu-detail-screen .actions-row{gap:6px;margin-left:10px;margin-right:10px}.vishnu-detail-screen .btn{font-size:.76rem;padding:0 5px}.vishnu-detail-screen .poster{width:96px}.vishnu-detail-screen .movie-title{font-size:1.3rem}.vishnu-detail-screen .episode-selectors{gap:6px}}
 @media(min-width:700px){.vishnu-detail-screen{max-width:760px;margin:0 auto}.vishnu-detail-screen .detail-hero{padding:28px 22px}.vishnu-detail-screen .poster{width:140px}.vishnu-detail-screen .movie-title{font-size:2rem}.vishnu-detail-screen .synopsis{font-size:.95rem}}
 
+
+/* VISHNU Player 2.0 — cinematic controls + download manager */
+.vishnu-detail-screen .player-section{padding:12px;background:linear-gradient(180deg,#111214,#09090b);box-shadow:0 16px 38px rgba(0,0,0,.28)}
+.vishnu-detail-screen .player-header{align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.vishnu-detail-screen .player-tools{display:flex;align-items:center;gap:7px}
+.vishnu-detail-screen .player-tool{width:34px;height:34px;border:1px solid var(--detail-border);border-radius:50%;background:#191a1d;color:#fff;font-size:19px;line-height:1;display:grid;place-items:center}
+.vishnu-detail-screen .player-tool:active{background:#303136;transform:scale(.95)}
+.vishnu-detail-screen .player-frame-wrap{background:#000;box-shadow:0 8px 28px rgba(0,0,0,.35)}
+.vishnu-detail-screen .player-frame-wrap:fullscreen{width:100vw;height:100vh;aspect-ratio:auto;border-radius:0;background:#000}
+.vishnu-detail-screen .player-frame-wrap:fullscreen iframe{width:100%;height:100%}
+.vishnu-detail-screen .player-status{min-height:18px;line-height:1.45}
+.vishnu-detail-screen .download-panel{margin-top:12px;background:linear-gradient(180deg,#111214,#0b0b0d)}
+.vishnu-detail-screen .download-queue-head{display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px;color:#fff;font-size:13px}
+.vishnu-detail-screen .download-clear,.vishnu-detail-screen .download-again{border:1px solid var(--detail-border);background:#191a1d;color:#fff;border-radius:9px;padding:7px 10px;font-size:11px;font-weight:700}
+.vishnu-detail-screen .download-queue{display:grid;gap:7px}
+.vishnu-detail-screen .download-entry{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--detail-border);border-radius:11px;background:#09090b}
+.vishnu-detail-screen .download-entry-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.vishnu-detail-screen .download-entry-copy strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vishnu-detail-screen .download-entry-copy small{font-size:10px;color:var(--detail-muted)}
+.vishnu-detail-screen .magnet-details{margin-top:14px;border-top:1px solid var(--detail-border);padding-top:12px;color:#fff;font-size:12px}
+.vishnu-detail-screen .magnet-details summary{cursor:pointer;font-weight:700}
+@media(max-width:420px){.vishnu-detail-screen .player-header{align-items:flex-start}.vishnu-detail-screen .player-tools{margin-left:auto}.vishnu-detail-screen .server-pill{padding:7px 11px}.vishnu-detail-screen .download-entry{align-items:flex-start;flex-direction:column}.vishnu-detail-screen .download-again{width:100%}}
+
 </style>
 </head>
 <body>
