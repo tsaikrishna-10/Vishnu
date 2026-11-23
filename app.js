@@ -63,6 +63,8 @@ function showPage(id) {
   });
   window.scrollTo(0, 0);
   if (id === "mylist") renderList();
+  if (id === "downloads") renderDownloadHub();
+  if (id === "home") renderContinueWatching();
   if (pageConfig[id] && pages[id] === 1 && !$(pageConfig[id].target)?.children.length) loadPage(id, false);
 }
 window.showPage = showPage;
@@ -199,12 +201,32 @@ function renderTop10AndPosterFeed(items) {
   }));
 }
 
+function readPlaybackProgress() {
+  try { return JSON.parse(localStorage.getItem("vishnu_player_progress") || "{}"); } catch { return {}; }
+}
+function renderContinueWatching() {
+  const section = $("#continueWatchingSection"), target = $("#continueWatching");
+  if (!section || !target) return;
+  const entries = Object.values(readPlaybackProgress()).filter(e => e && (e.title || e.name) && Number(e.currentTime || e.position || e.progress || 0) > 0 && (!Number(e.duration || e.totalDuration) || Number(e.currentTime || e.position || e.progress) < Number(e.duration || e.totalDuration) * .95)).sort((a,b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0)).slice(0,12);
+  section.hidden = !entries.length;
+  if (!entries.length) { target.innerHTML = ""; return; }
+  target.innerHTML = entries.map(e => {
+    const kind = e.mediaType || e.media_type || "movie", id = e.tmdbId || e.id;
+    const poster = e.poster_path ? image(e.poster_path) : (e.poster || e.posterUrl || "");
+    const title = escapeHtml(e.title || e.name || "Continue watching");
+    const current = Number(e.currentTime || e.position || e.progress || 0), duration = Number(e.duration || e.totalDuration || 0);
+    const percent = duration > 0 ? Math.max(0, Math.min(100, current / duration * 100)) : 0;
+    return '<article class="continue-card" data-id="' + escapeHtml(id || "") + '" data-type="' + escapeHtml(kind) + '"><div class="continue-poster">' + (poster ? '<img src="' + escapeHtml(poster) + '" alt="' + title + '" loading="lazy">' : '') + '<span class="continue-play">▶</span></div><div class="continue-copy"><strong>' + title + '</strong><small>' + (duration > 0 ? Math.floor(current/60) + 'm watched' : 'Resume playback') + '</small><div class="continue-progress"><i style="width:' + percent + '%"></i></div></div></article>';
+  }).join("");
+  target.querySelectorAll(".continue-card").forEach(card => card.addEventListener("click", () => { if (card.dataset.id) detail(card.dataset.id, card.dataset.type); }));
+}
 async function loadHome() {
   const jobs = [
     ["/trending/all/week?language=en-US", data => {
       const featured = data.results?.find(x => x.backdrop_path) || data.results?.[0];
       if (featured) setHero(featured);
       renderTop10AndPosterFeed(data.results);
+      renderContinueWatching();
       renderCards(data.results, "#trending");
     }],
     ["/movie/popular?language=en-US&page=1", data => {
@@ -334,6 +356,11 @@ async function detail(id, type = "movie") {
       $("#vidoraBtn")?.setAttribute("aria-selected", String(provider === "vidora"));
     };
     const loadPlayer = provider => {
+      try {
+        const progress = readPlaybackProgress(), key = kind + "_" + id;
+        progress[key] = { ...(progress[key] || {}), id: item.id, tmdbId: item.id, mediaType: kind, title: item.title || item.name, poster_path: item.poster_path, backdrop_path: item.backdrop_path, season: Number($("#player-season")?.value || 1), episode: Number($("#player-episode")?.value || 1), provider: provider, updatedAt: Date.now() };
+        localStorage.setItem("vishnu_player_progress", JSON.stringify(progress));
+      } catch {}
       setPlayerTab(provider);
       const season = Math.max(1, Number($("#player-season")?.value || 1));
       const episode = Math.max(1, Number($("#player-episode")?.value || 1));
@@ -412,6 +439,7 @@ async function detail(id, type = "movie") {
     $("#clear-downloads")?.addEventListener("click", () => {
       localStorage.removeItem("vishnu_download_history");
       renderDownloadQueue();
+      renderDownloadHub();
       toast("Download history cleared.");
     });
     renderDownloadQueue();
@@ -439,8 +467,20 @@ window.addEventListener("message", event => {
       localStorage.setItem("vishnu_player_progress", JSON.stringify(current));
     } catch (error) { console.warn("VISHNU player progress could not be saved:", error); }
   }
-  if (payload.type === "PLAYER_EVENT" && payload.data?.event === "ended") {
-    console.info("VISHNU external playback ended:", payload.data.tmdbId);
+  if (payload.type === "PLAYER_EVENT" && payload.data) {
+    const data = payload.data, eventName = String(data.event || "").toLowerCase();
+    const mediaId = data.tmdbId || data.id, mediaType = data.mediaType || data.media_type || "movie";
+    if (["timeupdate","progress","time_update","play","pause","ended"].includes(eventName)) {
+      try {
+        const current = readPlaybackProgress(), key = mediaType + "_" + (mediaId || "unknown"), previous = current[key] || {};
+        const position = Number(data.currentTime ?? data.position ?? data.time ?? previous.currentTime ?? 0);
+        const duration = Number(data.duration ?? data.totalDuration ?? previous.duration ?? 0);
+        current[key] = { ...previous, ...data, id: mediaId || previous.id, tmdbId: mediaId || previous.tmdbId, mediaType: mediaType, currentTime: position, duration: duration, updatedAt: Date.now() };
+        if (eventName === "ended") delete current[key];
+        localStorage.setItem("vishnu_player_progress", JSON.stringify(current));
+        renderContinueWatching();
+      } catch (error) { console.warn("VISHNU playback position could not be saved:", error); }
+    }
   }
 });
 
@@ -548,6 +588,13 @@ function readDownloadHistory() {
   try { return JSON.parse(localStorage.getItem(DOWNLOAD_HISTORY_KEY) || "[]").slice(0, 20); }
   catch { return []; }
 }
+function renderDownloadHub() {
+  const target = $("#downloads-grid"); if (!target) return;
+  const entries = readDownloadHistory();
+  if (!entries.length) { target.innerHTML = '<div class="downloads-empty"><div class="downloads-empty-icon">↓</div><h3>No downloads yet</h3><p>Direct media downloads you start on this device will appear here.</p></div>'; return; }
+  target.innerHTML = entries.map(e => '<article class="hub-download-card"><div class="hub-download-icon">↓</div><div class="hub-download-copy"><strong>' + escapeHtml(e.title || "VISHNU media") + '</strong><small>' + new Date(e.createdAt).toLocaleString() + '</small><small class="hub-download-url">' + escapeHtml(e.url) + '</small></div><button type="button" class="download-again" data-hub-url="' + escapeHtml(e.url) + '" data-hub-title="' + escapeHtml(e.title || "VISHNU media") + '">Download again</button></article>').join("");
+  target.querySelectorAll("[data-hub-url]").forEach(b => b.addEventListener("click", () => downloadUrl(b.dataset.hubUrl, b.dataset.hubTitle, false)));
+}
 function renderDownloadQueue() {
   const queue = $("#downloadQueue");
   if (!queue) return;
@@ -614,6 +661,8 @@ document.querySelector(".mark")?.addEventListener("click", () => showPage("home"
 window.addEventListener("scroll", () => $("#navbar")?.classList.toggle("scrolled", window.scrollY > 24), { passive: true });
 
 renderList();
+renderDownloadHub();
+renderContinueWatching();
 loadHome();
 
 
