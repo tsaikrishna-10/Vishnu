@@ -138,6 +138,45 @@ body.large-text .movie small,body.large-text .muted,body.large-text .settings-he
 .feed-poster-meta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;align-items:center;justify-content:space-between}
 @media(min-width:700px){.poster-feed-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
+
+/* VISHNU detail page — monochrome player layout */
+.vishnu-detail-screen{--detail-bg:#050506;--detail-surface:#111214;--detail-elevated:#191a1d;--detail-border:rgba(255,255,255,.08);--detail-muted:#a1a1aa;color:#fff;background:var(--detail-bg);border-radius:18px;padding:0 0 24px;overflow:hidden}
+.vishnu-detail-screen .detail-hero{margin:0 -0px 18px;padding:22px 16px 20px;min-height:0;max-height:none;background-size:cover;background-position:center 25%;position:relative}
+.vishnu-detail-screen .detail-hero:after{background:linear-gradient(180deg,rgba(5,5,6,.25),rgba(5,5,6,.92) 72%,#050506)}
+.vishnu-detail-hero{display:flex;gap:14px;align-items:flex-start;position:relative;z-index:1}
+.vishnu-detail-screen .poster{width:112px;aspect-ratio:2/3;object-fit:cover;border-radius:12px;border:1px solid var(--detail-border);flex-shrink:0}
+.vishnu-detail-copy{min-width:0;padding-top:2px}
+.vishnu-detail-screen .movie-title{font-size:1.5rem;font-weight:700;margin:0 0 4px;line-height:1.15}
+.vishnu-detail-screen .meta{font-size:.85rem;color:var(--detail-muted);margin-bottom:8px}
+.vishnu-detail-screen .meta .rate{color:#fff}
+.vishnu-detail-screen .synopsis{font-size:.85rem;line-height:1.45;color:var(--detail-muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.vishnu-detail-screen .actions-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin:0 14px 16px}
+.vishnu-detail-screen .btn{height:44px;border-radius:999px;font-size:.84rem;font-weight:650;display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;border:1px solid var(--detail-border);transition:transform .15s ease,opacity .15s ease;padding:0 8px;white-space:nowrap}
+.vishnu-detail-screen .btn:active{transform:scale(.98)}
+.vishnu-detail-screen .btn-play{background:#fff;color:#09090b;border-color:transparent}
+.vishnu-detail-screen .btn-secondary{background:var(--detail-surface);color:#fff}
+.vishnu-detail-screen .btn-secondary.active{background:var(--detail-elevated);border-color:rgba(255,255,255,.25)}
+.vishnu-detail-screen .player-section{display:none;background:var(--detail-surface);border:1px solid var(--detail-border);border-radius:16px;padding:12px;margin:0 12px 14px}
+.vishnu-detail-screen .player-section.open{display:block}
+.vishnu-detail-screen .player-header{display:flex;justify-content:flex-end;margin-bottom:10px}
+.vishnu-detail-screen .server-switcher{display:inline-flex;background:var(--detail-bg);padding:3px;border-radius:999px;border:1px solid var(--detail-border);gap:4px}
+.vishnu-detail-screen .server-pill{padding:7px 15px;border-radius:999px;border:0;background:transparent;color:var(--detail-muted);font-size:.8rem;font-weight:650;cursor:pointer}
+.vishnu-detail-screen .server-pill.active{background:#fff;color:#09090b}
+.vishnu-detail-screen .player-frame-wrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000}
+.vishnu-detail-screen .player-frame-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vishnu-detail-screen .player-status{font-size:12px;color:var(--detail-muted);margin:9px 2px 0}
+.vishnu-detail-screen .episode-selectors{display:flex;align-items:end;gap:10px;margin:0 0 12px}
+.vishnu-detail-screen .episode-selectors .field{flex:1;min-width:0;margin:0;color:var(--detail-muted);font-size:12px}
+.vishnu-detail-screen .episode-selectors input,.vishnu-detail-screen .download-panel input{width:100%;background:#09090b;color:#fff;border:1px solid var(--detail-border);border-radius:10px;padding:10px;margin-top:6px;outline:none}
+.vishnu-detail-screen .download-panel{display:none;background:var(--detail-surface);border:1px solid var(--detail-border);border-radius:16px;padding:15px;margin:0 12px}
+.vishnu-detail-screen .download-panel.open{display:block}
+.vishnu-detail-screen .download-panel h3{font-size:15px;margin-bottom:6px}
+.vishnu-detail-screen .download-panel .muted{font-size:12px;line-height:1.5;color:var(--detail-muted)}
+.vishnu-detail-screen .download-panel .field{display:block;margin:12px 0;color:var(--detail-muted);font-size:12px}
+.vishnu-detail-screen .download-panel .actions{display:flex;gap:8px;margin:0 0 12px}
+@media(max-width:360px){.vishnu-detail-screen .actions-row{gap:6px;margin-left:10px;margin-right:10px}.vishnu-detail-screen .btn{font-size:.76rem;padding:0 5px}.vishnu-detail-screen .poster{width:96px}.vishnu-detail-screen .movie-title{font-size:1.3rem}.vishnu-detail-screen .episode-selectors{gap:6px}}
+@media(min-width:700px){.vishnu-detail-screen{max-width:760px;margin:0 auto}.vishnu-detail-screen .detail-hero{padding:28px 22px}.vishnu-detail-screen .poster{width:140px}.vishnu-detail-screen .movie-title{font-size:2rem}.vishnu-detail-screen .synopsis{font-size:.95rem}}
+
 </style>
 </head>
 <body>
