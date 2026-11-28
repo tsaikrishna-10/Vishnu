@@ -1,6 +1,7 @@
 package com.vishnu.app
 
 import android.os.Bundle
+import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
@@ -29,7 +30,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -432,7 +432,6 @@ private fun DownloadsScreen() {
     val context = LocalContext.current
     var url by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Downloads are handled by Android's system Download Manager.") }
-    var filename by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
