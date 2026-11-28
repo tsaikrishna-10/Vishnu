@@ -26,6 +26,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -47,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -97,6 +104,7 @@ private fun VishnuApp() {
                 ) { page ->
                     when (page) {
                         "Home" -> HomeScreen(onDiscover = { selected = "Discover" })
+                        "Discover" -> DiscoverScreen()
                         else -> PlaceholderScreen(page)
                     }
                 }
@@ -251,6 +259,110 @@ private fun HomeScreen(onDiscover: () -> Unit) {
             fontSize = 13.sp,
             lineHeight = 20.sp
         )
+    }
+}
+
+
+@Composable
+private fun DiscoverScreen() {
+    var input by remember { mutableStateOf("") }
+    var submitted by remember { mutableStateOf("") }
+    var results by remember { mutableStateOf<List<TmdbTitle>>(emptyList()) }
+    var loading by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf("Search movies, TV shows and anime.") }
+
+    LaunchedEffect(submitted) {
+        if (submitted.isBlank()) return@LaunchedEffect
+        loading = true
+        message = "Searching the VISHNU catalogue…"
+        try {
+            val encoded = android.net.Uri.encode(submitted.trim())
+            val response = TmdbClient.api.getCatalogue("/search/multi?query=$encoded&include_adult=false&language=en-US&page=1")
+            results = response.results.filter { it.media_type != "person" }
+            message = if (results.isEmpty()) "No titles found. Try another search." else ""
+        } catch (_: Exception) {
+            results = emptyList()
+            message = "Search unavailable. Check your connection and try again."
+        } finally {
+            loading = false
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+            .padding(top = 24.dp)
+    ) {
+        Text("DISCOVER", color = Emerald, fontSize = 10.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text("Find your next favourite.", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+        Spacer(Modifier.height(18.dp))
+        OutlinedTextField(
+            value = input,
+            onValueChange = { input = it },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            label = { Text("Movie, series or anime") },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Emerald,
+                unfocusedBorderColor = Muted,
+                focusedLabelColor = Emerald,
+                unfocusedLabelColor = Muted,
+                cursorColor = Emerald
+            )
+        )
+        Spacer(Modifier.height(10.dp))
+        Button(
+            onClick = { submitted = input.trim() },
+            enabled = input.isNotBlank() && !loading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("SEARCH VISHNU")
+        }
+        Spacer(Modifier.height(18.dp))
+        if (loading) {
+            CircularProgressIndicator(color = Emerald, modifier = Modifier.align(Alignment.CenterHorizontally))
+        }
+        if (results.isEmpty()) {
+            Text(message, color = Muted, fontSize = 13.sp)
+        } else {
+            Text("${results.size} RESULTS", color = Emerald, fontSize = 10.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
+            results.forEach { title ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 14.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Panel)
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    coil.compose.AsyncImage(
+                        model = title.poster_path?.let { "https://image.tmdb.org/t/p/w185$it" },
+                        contentDescription = title.displayTitle,
+                        modifier = Modifier
+                            .width(66.dp)
+                            .height(96.dp)
+                            .clip(RoundedCornerShape(9.dp))
+                            .background(Void)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(title.displayTitle, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Spacer(Modifier.height(4.dp))
+                        Text((title.media_type ?: "title").uppercase(), color = Emerald, fontSize = 9.sp, letterSpacing = 1.sp)
+                        Spacer(Modifier.height(5.dp))
+                        Text(title.overview ?: "No synopsis available.", color = Muted, fontSize = 11.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, lineHeight = 15.sp)
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(28.dp))
     }
 }
 
