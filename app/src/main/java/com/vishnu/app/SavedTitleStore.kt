@@ -2,7 +2,6 @@ package com.vishnu.app
 
 import android.content.Context
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 
 object SavedTitleStore {
     private const val PREFS = "vishnu_library"
