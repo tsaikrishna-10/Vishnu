@@ -44,7 +44,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -171,8 +170,7 @@ private fun HomeScreen(onDiscover: () -> Unit) {
             Column {
                 Text("VISHNU ORIGINAL EXPERIENCE", color = Mint, fontSize = 9.sp, letterSpacing = 1.5.sp)
                 Spacer(Modifier.height(8.dp))
-                Text("Stories that
-stay with you.", color = Color.White, fontSize = 30.sp, lineHeight = 34.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Stories that\\nstay with you.", color = Color.White, fontSize = 30.sp, lineHeight = 34.sp, fontWeight = FontWeight.ExtraBold)
                 Spacer(Modifier.height(8.dp))
                 Text("Discover your next obsession.", color = Color(0xFFC0D0CA), fontSize = 12.sp)
                 Spacer(Modifier.height(14.dp))
