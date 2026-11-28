@@ -41,8 +41,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -106,6 +108,18 @@ private fun VishnuApp() {
 
 @Composable
 private fun HomeScreen(onDiscover: () -> Unit) {
+    var trending by remember { mutableStateOf<List<TmdbTitle>>(emptyList()) }
+    var catalogueMessage by remember { mutableStateOf("Connecting to VISHNU catalogue…") }
+
+    LaunchedEffect(Unit) {
+        try {
+            val response = TmdbClient.api.getCatalogue("/trending/all/week?language=en-US")
+            trending = response.results
+            catalogueMessage = if (trending.isEmpty()) "No trending titles returned." else ""
+        } catch (_: Exception) {
+            catalogueMessage = "Catalogue temporarily unavailable. Check the connection and retry in a later build."
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -196,6 +210,35 @@ stay with you.", color = Color.White, fontSize = 30.sp, lineHeight = 34.sp, font
                     Text(label, color = Mint, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
+        }
+        Spacer(Modifier.height(26.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Trending now", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.weight(1f))
+            Text("TMDB", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        }
+        Spacer(Modifier.height(12.dp))
+        if (trending.isNotEmpty()) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(trending.take(12)) { title ->
+                    Column(modifier = Modifier.width(116.dp)) {
+                        coil.compose.AsyncImage(
+                            model = title.poster_path?.let { "https://image.tmdb.org/t/p/w342$it" },
+                            contentDescription = title.displayTitle,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(166.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Panel)
+                        )
+                        Spacer(Modifier.height(7.dp))
+                        Text(title.displayTitle, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("★ ${"%.1f".format(title.vote_average ?: 0.0)}", color = Mint, fontSize = 10.sp)
+                    }
+                }
+            }
+        } else {
+            Text(catalogueMessage, color = Muted, fontSize = 12.sp)
         }
         Spacer(Modifier.height(26.dp))
         Text("THE NEXT CHAPTER", color = Muted, fontSize = 10.sp, letterSpacing = 2.sp)
