@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.foundation.lazy.items
@@ -107,6 +108,7 @@ private fun VishnuApp() {
                         "Home" -> HomeScreen(onDiscover = { selected = "Discover" })
                         "Discover" -> DiscoverScreen()
                         "My List" -> MyListScreen()
+                        "Downloads" -> DownloadsScreen()
                         else -> PlaceholderScreen(page)
                     }
                 }
@@ -421,6 +423,83 @@ private fun MyListScreen() {
                 }
             }
         }
+    }
+}
+
+
+@Composable
+private fun DownloadsScreen() {
+    val context = LocalContext.current
+    var url by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("Downloads are handled by Android's system Download Manager.") }
+    var filename by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+            .padding(top = 24.dp)
+    ) {
+        Text("OFFLINE LIBRARY", color = Emerald, fontSize = 10.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text("Downloads", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+        Spacer(Modifier.height(8.dp))
+        Text("Download direct media files that you own or are authorised to save.", color = Muted, fontSize = 12.sp, lineHeight = 18.sp)
+        Spacer(Modifier.height(22.dp))
+        OutlinedTextField(
+            value = url,
+            onValueChange = { url = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Direct media URL") },
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Emerald,
+                unfocusedBorderColor = Muted,
+                focusedLabelColor = Emerald,
+                unfocusedLabelColor = Muted,
+                cursorColor = Emerald
+            )
+        )
+        Spacer(Modifier.height(12.dp))
+        Button(
+            onClick = {
+                val parsed = runCatching { android.net.Uri.parse(url.trim()) }.getOrNull()
+                if (parsed == null || parsed.scheme !in listOf("http", "https") || parsed.host.isNullOrBlank()) {
+                    status = "Enter a valid direct HTTP or HTTPS file URL."
+                } else {
+                    try {
+                        val request = android.app.DownloadManager.Request(parsed)
+                            .setTitle(parsed.lastPathSegment?.takeIf { it.isNotBlank() } ?: "VISHNU media")
+                            .setDescription("Downloading with VISHNU")
+                            .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                            .setAllowedOverMetered(true)
+                            .setAllowedOverRoaming(false)
+                        val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
+                        val downloadId = manager.enqueue(request)
+                        status = "Download queued successfully. Android download ID: $downloadId"
+                        url = ""
+                    } catch (_: Exception) {
+                        status = "Could not start this download. Check the URL and device storage."
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = url.isNotBlank()
+        ) { Text("START DOWNLOAD") }
+        Spacer(Modifier.height(16.dp))
+        Text(status, color = Mint, fontSize = 12.sp, lineHeight = 18.sp)
+        Spacer(Modifier.height(20.dp))
+        Text("DOWNLOAD NOTES", color = Emerald, fontSize = 10.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "• Android manages progress, notifications and completed files.\n• Some websites require sign-in or special headers and may not provide direct file URLs.\n• VISHNU does not extract media from protected players or bypass access controls.",
+            color = Muted,
+            fontSize = 12.sp,
+            lineHeight = 19.sp
+        )
     }
 }
 
