@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.foundation.lazy.items
@@ -53,6 +54,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -104,6 +106,7 @@ private fun VishnuApp() {
                     when (page) {
                         "Home" -> HomeScreen(onDiscover = { selected = "Discover" })
                         "Discover" -> DiscoverScreen()
+                        "My List" -> MyListScreen()
                         else -> PlaceholderScreen(page)
                     }
                 }
@@ -269,6 +272,7 @@ private fun DiscoverScreen() {
     var results by remember { mutableStateOf<List<TmdbTitle>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("Search movies, TV shows and anime.") }
+    val context = LocalContext.current
 
     LaunchedEffect(submitted) {
         if (submitted.isBlank()) return@LaunchedEffect
@@ -357,11 +361,66 @@ private fun DiscoverScreen() {
                         Text((title.media_type ?: "title").uppercase(), color = Emerald, fontSize = 9.sp, letterSpacing = 1.sp)
                         Spacer(Modifier.height(5.dp))
                         Text(title.overview ?: "No synopsis available.", color = Muted, fontSize = 11.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, lineHeight = 15.sp)
+                        Spacer(Modifier.height(7.dp))
+                        OutlinedButton(onClick = { SavedTitleStore.add(context, title) }) {
+                            Text("＋ MY LIST", color = Mint, fontSize = 9.sp)
+                        }
                     }
                 }
             }
         }
         Spacer(Modifier.height(28.dp))
+    }
+}
+
+
+@Composable
+private fun MyListScreen() {
+    val context = LocalContext.current
+    var saved by remember { mutableStateOf(SavedTitleStore.read(context)) }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+            .padding(top = 24.dp)
+    ) {
+        Text("YOUR COLLECTION", color = Emerald, fontSize = 10.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text("My List", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+        Spacer(Modifier.height(6.dp))
+        Text("${saved.size} saved titles on this device", color = Muted, fontSize = 12.sp)
+        Spacer(Modifier.height(18.dp))
+        if (saved.isEmpty()) {
+            Text("Your watchlist is empty. Discover a title and add it to My List.", color = Muted, fontSize = 13.sp)
+        } else {
+            saved.forEach { title ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Panel)
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    coil.compose.AsyncImage(
+                        model = title.poster_path?.let { "https://image.tmdb.org/t/p/w185$it" },
+                        contentDescription = title.displayTitle,
+                        modifier = Modifier.width(58.dp).height(86.dp).clip(RoundedCornerShape(8.dp)).background(Void)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(title.displayTitle, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text((title.media_type ?: "title").uppercase(), color = Emerald, fontSize = 9.sp)
+                    }
+                    OutlinedButton(onClick = {
+                        SavedTitleStore.remove(context, title)
+                        saved = SavedTitleStore.read(context)
+                    }) { Text("REMOVE", color = Muted, fontSize = 9.sp) }
+                }
+            }
+        }
     }
 }
 
